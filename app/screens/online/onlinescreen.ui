@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OnlineScreen</class>
+ <widget class="QWidget" name="OnlineScreen">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="tStackedWidget" name="onlinePageSwitcher">
+     <widget class="OnlinePendingScreen" name="pendingScreen"/>
+     <widget class="OnlineMenuScreen" name="menuScreen"/>
+     <widget class="QWidget" name="lobbyScreen"/>
+     <widget class="QWidget" name="onlineGameScreen"/>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>tStackedWidget</class>
+   <extends>QStackedWidget</extends>
+   <header location="global">tstackedwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>OnlinePendingScreen</class>
+   <extends>QWidget</extends>
+   <header>screens/online/pending/onlinependingscreen.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>OnlineMenuScreen</class>
+   <extends>QWidget</extends>
+   <header>screens/online/menu/onlinemenuscreen.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

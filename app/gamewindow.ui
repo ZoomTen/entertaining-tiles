@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GameWindow</class>
+ <widget class="QWidget" name="GameWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>614</width>
+    <height>495</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="csdArea" native="true">
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <layout class="QHBoxLayout" name="leftSideCsd"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="menuButton">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>208</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Entertaining Tiles</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>208</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="rightSideCsd"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="tStackedWidget" name="mainSwitcher">
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
+     <widget class="MainScreen" name="mainScreen"/>
+     <widget class="OnlineScreen" name="onlineScreen"/>
+    </widget>
+   </item>
+  </layout>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset theme="exit">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+F4</string>
+   </property>
+  </action>
+  <action name="actionSources">
+   <property name="icon">
+    <iconset theme="branch">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>Sources</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset theme="info">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>tStackedWidget</class>
+   <extends>QStackedWidget</extends>
+   <header location="global">tstackedwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MainScreen</class>
+   <extends>QWidget</extends>
+   <header>screens/main/mainscreen.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>OnlineScreen</class>
+   <extends>QWidget</extends>
+   <header>screens/online/onlinescreen.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
