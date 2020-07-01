@@ -135,7 +135,7 @@ void ReversiTile::mousePressEvent(QMouseEvent*)
 {
     qDebug() << "press" << d->id;  // DEBUG
     if(d->type != Empty) flashTile(); // DEBUG
-    emit emitID(d->id);
+    emit clickedTileID(d->id);
     this->update();
 }
 

@@ -86,7 +86,7 @@ void GameWindow::setupFunctions()
     // Register local play
     connect(ui->mainScreen, &MainScreen::beginPlay, this, [=](int gameType){
         // setup game
-        ui->gameScreen->startGame(8, 8, gameType); // TODO: make width and height adjustable
+        ui->gameScreen->startGame(8, gameType); // TODO: make width and height adjustable
         ui->mainSwitcher->setCurrentWidget(ui->gameScreen);
     });
 

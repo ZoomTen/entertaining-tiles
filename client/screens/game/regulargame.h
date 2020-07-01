@@ -21,19 +21,25 @@ public:
         TakeTurns
     };
 
-    QSize tileSize();
+    void setActivePlayer(int player);
+    int getIndex(int row, int col);
+    bool isInBoard(int row, int col);
 
 signals:
     void windowResized(QSize tileSize, QSize boardSize);
 
 public slots:
-    void startGame(int width, int height, int gameType);
+    void startGame(int size, int gameType);
 
 private:
     Ui::RegularGame *ui;
     RegularGamePrivate* d;
 
     void clearTiles();
+    void calculateLegalMoves(int size);
+
+private slots:
+    void processMove(int tileId);
 
 protected:
     void resizeEvent(QResizeEvent *resize);

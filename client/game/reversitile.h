@@ -34,7 +34,7 @@ public:
     int getID();
 
 signals:
-    void emitID(int id);
+    void clickedTileID(int id);
 
 public slots:
     void setAppropriateSize(QSize tileSize, QSize boardSize);
