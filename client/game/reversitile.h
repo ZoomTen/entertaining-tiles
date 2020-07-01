@@ -14,6 +14,12 @@ public:
       Dark,
       Light
     };
+
+    enum FlashAnim{
+        Fading,
+        FlashOut
+    };
+
     explicit ReversiTile(QWidget *parent = nullptr, int id = 0, int type = Empty);
     ~ReversiTile();
 
@@ -23,14 +29,26 @@ public:
     int getType();
 
     void setHighlightable(bool highlightable);
+    bool getHighlightable();
 
     int getID();
 
+signals:
+    void emitID(int id);
+
+public slots:
+    void setAppropriateSize(QSize tileSize, QSize boardSize);
+
 private:
     ReversiTilePrivate* d;
+    void flashTile();
+    void setFlashingAnimation(int flashingAnim);
 
-
-signals:
+protected:
+    void mousePressEvent(QMouseEvent *e);
+    void enterEvent(QEvent *e);
+    void leaveEvent(QEvent *e);
+    void paintEvent(QPaintEvent* event);
 
 };
 

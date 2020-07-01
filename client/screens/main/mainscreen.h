@@ -17,6 +17,7 @@ public:
 
 signals:
     void beginOnline();
+    void beginPlay(int gameType);
 
 private:
     Ui::MainScreen *ui;

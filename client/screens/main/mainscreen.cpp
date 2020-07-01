@@ -4,6 +4,9 @@
 // entertaining
 #include <gamepadbuttons.h>
 
+// game modes
+#include "screens/game/regulargame.h"
+
 MainScreen::MainScreen(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MainScreen)
@@ -90,6 +93,10 @@ void MainScreen::setButtonActions()
 
     connect(ui->onlineButton, &QCommandLinkButton::clicked, this, [=]{
         emit beginOnline();
+    });
+
+    connect(ui->localMultiplayerButton, &QCommandLinkButton::clicked, this, [=]{
+        emit beginPlay(RegularGame::TakeTurns);
     });
 
     connect(ui->infoButton, &QCommandLinkButton::clicked, this, [=]{

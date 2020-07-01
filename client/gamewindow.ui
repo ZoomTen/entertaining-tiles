@@ -93,6 +93,7 @@
       <bool>true</bool>
      </property>
      <widget class="MainScreen" name="mainScreen"/>
+     <widget class="RegularGame" name="gameScreen"/>
      <widget class="OnlineScreen" name="onlineScreen"/>
     </widget>
    </item>
@@ -145,6 +146,12 @@
    <class>OnlineScreen</class>
    <extends>QWidget</extends>
    <header>screens/online/onlinescreen.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RegularGame</class>
+   <extends>QWidget</extends>
+   <header>screens/game/regulargame.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

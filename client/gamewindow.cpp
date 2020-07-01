@@ -83,12 +83,21 @@ void GameWindow::init()
 
 void GameWindow::setupFunctions()
 {
+    // Register local play
+    connect(ui->mainScreen, &MainScreen::beginPlay, this, [=](int gameType){
+        // setup game
+        ui->gameScreen->startGame(8, 8, gameType); // TODO: make width and height adjustable
+        ui->mainSwitcher->setCurrentWidget(ui->gameScreen);
+    });
+
     // Register "back to main menu" event
     connect(ui->onlineScreen, &OnlineScreen::backToMain, this, [=]{
         ui->mainSwitcher->setCurrentWidget(ui->mainScreen);
     });
+
     // Register overlay for the login screen
     PauseOverlay::registerOverlayForWindow(this, ui->mainSwitcher);
+
     // Setup online functionality
     connect(ui->mainScreen, &MainScreen::beginOnline, this, [=]{
         LoginDialog* login = new LoginDialog(this);
