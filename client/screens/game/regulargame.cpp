@@ -32,6 +32,12 @@ QSize RegularGame::tileSize()
 
 void RegularGame::startGame(int width, int height, int gameType)
 {
+    // if a board exists, delete all the tiles first
+    if (d->tiles.count() != 0){
+        clearTiles();
+    }
+
+    // create new tiles
     for (int row = 0; row < height; ++row){
         for (int col = 0; col < width; ++col){
             // make tiles
@@ -48,6 +54,7 @@ void RegularGame::startGame(int width, int height, int gameType)
         }
     }
 
+    // default positions
     d->tiles[27]->setType(ReversiTile::Light);
     d->tiles[28]->setType(ReversiTile::Dark);
     d->tiles[35]->setType(ReversiTile::Dark);
