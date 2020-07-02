@@ -38,12 +38,17 @@ RegularGame::RegularGame(QWidget *parent) :
     d->playerNames = {tr("Empty"), tr("Dark"), tr("Light")};
 
     // bind gamepad options
-    // assign "A" button to flip tiles
+    // assign "A" / Enter button to flip tiles
     ui->gamepadHud->setButtonText(QGamepadManager::ButtonA, tr("Flip Tile"));
     ui->gamepadHud->bindKey(Qt::Key_Return, QGamepadManager::ButtonA);
-    // assign "A" button to flip tiles
+
+    // assign "L1" / H button to show hints (lol?)
     ui->gamepadHud->setButtonText(QGamepadManager::ButtonL1, tr("Hint"));
     ui->gamepadHud->bindKey(Qt::Key_H, QGamepadManager::ButtonL1);
+
+    // assign "Start" / Esc button to pause
+    ui->gamepadHud->setButtonText(QGamepadManager::ButtonStart, tr("Pause"));
+    ui->gamepadHud->bindKey(Qt::Key_Escape, QGamepadManager::ButtonStart);
 
 
 }
@@ -321,6 +326,11 @@ void RegularGame::startGame(int size, int gameType)
 
 }
 
+void RegularGame::pauseSession()
+{
+    qDebug() << "Game should have paused here";
+}
+
 void RegularGame::calculateLegalMoves(int size)
 {
     /* traverses the entire grid to see if there's any moves that can be
@@ -470,8 +480,16 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
         // Hint button hardcode to H
         ui->hintButton->click();
         break;
+    case Qt::Key_Escape:
+        pauseSession();
+        break;
     default:
         break;
     }
     qDebug() << d->focusedCoords;
+}
+
+void RegularGame::on_pauseButton_clicked()
+{
+    pauseSession();
 }

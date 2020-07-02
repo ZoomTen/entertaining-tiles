@@ -54,8 +54,12 @@ private:
                                          int row_offset, int col_offset,
                                          int row, int col);
 
+    void pauseSession();
+
 private slots:
     void processMove(int tileId);
+
+    void on_pauseButton_clicked();
 
 protected:
     void resizeEvent(QResizeEvent *resize);
