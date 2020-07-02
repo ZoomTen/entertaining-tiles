@@ -35,6 +35,8 @@ public:
 
     void flashTile();
 
+    void click();
+
 signals:
     void clickedTileID(int id);
 
@@ -45,11 +47,17 @@ private:
     ReversiTilePrivate* d;
     void setFlashingAnimation(int flashingAnim);
 
+    void tileSelected();
+    void tileUnselected();
+    void tileClicked();
+
 protected:
     void mousePressEvent(QMouseEvent *e);
     void enterEvent(QEvent *e);
     void leaveEvent(QEvent *e);
     void paintEvent(QPaintEvent* event);
+    void focusInEvent(QFocusEvent *e);
+    void focusOutEvent(QFocusEvent *e);
 
 };
 

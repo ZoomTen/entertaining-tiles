@@ -7,6 +7,10 @@
 
 #include <QDebug>
 
+#include <QKeyEvent>
+
+#include <QTimer>
+
 struct RegularGamePrivate{
     QVector<ReversiTile*> tiles;
     int gameType;
@@ -20,6 +24,8 @@ struct RegularGamePrivate{
     QList<QString> playerNames;
 
     QVector<bool> calculatedMoves;
+
+    QPair<int, int> focusedCoords;
 };
 
 RegularGame::RegularGame(QWidget *parent) :
@@ -30,6 +36,16 @@ RegularGame::RegularGame(QWidget *parent) :
     d = new RegularGamePrivate();
 
     d->playerNames = {tr("Empty"), tr("Dark"), tr("Light")};
+
+    // bind gamepad options
+    // assign "A" button to flip tiles
+    ui->gamepadHud->setButtonText(QGamepadManager::ButtonA, tr("Flip Tile"));
+    ui->gamepadHud->bindKey(Qt::Key_Return, QGamepadManager::ButtonA);
+    // assign "A" button to flip tiles
+    ui->gamepadHud->setButtonText(QGamepadManager::ButtonL1, tr("Hint"));
+    ui->gamepadHud->bindKey(Qt::Key_H, QGamepadManager::ButtonL1);
+
+
 }
 
 RegularGame::~RegularGame()
@@ -69,6 +85,17 @@ ReversiTile* RegularGame::getTileAt(int row, int col)
         return d->tiles[getIndex(row,col)];
     } else {
         return nullptr;  // invalid tile
+    }
+}
+
+ReversiTile *RegularGame::getTileAtIndex(int index)
+{
+    if ((0 <= index) &&
+             (index < (d->squareBoardSize * d->squareBoardSize))
+    ){
+        return d->tiles[index];
+    } else {
+        return nullptr;
     }
 }
 
@@ -195,6 +222,7 @@ void RegularGame::startGame(int size, int gameType)
     d->squareBoardSize = size;
     d->gameType = gameType;
     d->firstPlayerRunOut = ReversiTile::Empty;
+    d->focusedCoords = {0, 0};
 
     // create new tiles
     for (int row = 0; row < size; ++row){
@@ -284,6 +312,13 @@ void RegularGame::startGame(int size, int gameType)
     refreshTileCount(d->squareBoardSize);
 
     calculateLegalMoves(size);
+
+    // set focus
+    QTimer::singleShot(100, this, [=]{
+        d->tiles.first()->setFocus();
+        this->setFocusProxy(d->tiles.first());
+    });
+
 }
 
 void RegularGame::calculateLegalMoves(int size)
@@ -391,4 +426,52 @@ void RegularGame::resizeEvent(QResizeEvent*)
     QSize boardSize = QSize(d->squareBoardSize,d->squareBoardSize);
 
     emit windowResized(boardSize, ui->gameWidget->size());
+}
+
+void RegularGame::keyPressEvent(QKeyEvent *e)
+{
+    ReversiTile* focused;
+    // aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    switch (e->key()) {
+    case Qt::Key_Up:
+        if (--d->focusedCoords.first > -1){
+            focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+            focused->setFocus();
+            this->setFocusProxy(focused);
+        } else ++d->focusedCoords.first;
+        break;
+    case Qt::Key_Down:
+        if (++d->focusedCoords.first < d->squareBoardSize){
+            focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+            focused->setFocus();
+            this->setFocusProxy(focused);
+        } else --d->focusedCoords.first;
+        break;
+    case Qt::Key_Left:
+        if (--d->focusedCoords.second > -1){
+            focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+            focused->setFocus();
+            this->setFocusProxy(focused);
+        } else ++d->focusedCoords.second;
+        break;
+    case Qt::Key_Right:
+        if (++d->focusedCoords.second < d->squareBoardSize){
+            focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+            focused->setFocus();
+            this->setFocusProxy(focused);
+        } else --d->focusedCoords.second;
+        break;
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+        focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+        focused->click();   // simulate click
+        break;
+    case Qt::Key_H:
+        // Hint button hardcode to H
+        ui->hintButton->click();
+        break;
+    default:
+        break;
+    }
+    qDebug() << d->focusedCoords;
 }

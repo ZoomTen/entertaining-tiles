@@ -28,7 +28,10 @@ ReversiTile::ReversiTile(QWidget *parent, int id, int type) : QWidget(parent)
     // let QPainter set the background for us
     this->setAttribute(Qt::WA_TranslucentBackground);
 
+    // get any event we can
     this->setMouseTracking(true);
+    this->setFocusPolicy(Qt::StrongFocus);
+    this->setAttribute(Qt::WA_AcceptTouchEvents);
 }
 
 ReversiTile::~ReversiTile()
@@ -116,27 +119,9 @@ void ReversiTile::setFlashingAnimation(int flashingAnim)
     }
 }
 
-void ReversiTile::setAppropriateSize(QSize tileSize, QSize boardSize)
-{
-    // divide the widget size by the tiles size and use whichever is smaller
-    int width = (boardSize.width() / tileSize.width() / 1.25);
-    int height = (boardSize.height() / tileSize.height() / 1.25);
-    int squareSize = qMin(width, height);
-    //qDebug() << squareSize;
-    this->setFixedSize(squareSize, squareSize);
-}
+// on tile select (mouse or focus)
 
-void ReversiTile::mousePressEvent(QMouseEvent*)
-{
-   // qDebug() << "press" << d->id;  // DEBUG
-    if (d->highlightable){
-        qDebug() << "HIGHLIGHTABLE";
-    }
-    emit clickedTileID(d->id);
-    this->update();
-}
-
-void ReversiTile::enterEvent(QEvent*)
+void ReversiTile::tileSelected()
 {
     if (d->highlightable){
         //qDebug() << "highlighted";  // DEBUG
@@ -156,11 +141,66 @@ void ReversiTile::enterEvent(QEvent*)
     }
 }
 
+void ReversiTile::focusInEvent(QFocusEvent*)
+{
+    tileSelected();
+}
+
+void ReversiTile::enterEvent(QEvent*)
+{
+    // switch focus
+    if (!this->hasFocus()) this->setFocus();
+
+    tileSelected();
+}
+
+// on focus out or mouse out
+
+void ReversiTile::tileUnselected()
+{
+    d->highlighted = false;
+    this->update();
+}
+
+void ReversiTile::focusOutEvent(QFocusEvent*)
+{
+    tileUnselected();
+}
+
 void ReversiTile::leaveEvent(QEvent*)
 {
     //qDebug() << "off highlight";  // DEBUG
-    d->highlighted = false;
+    tileUnselected();
+}
+
+// on tile click or button press
+
+void ReversiTile::tileClicked()
+{
+    emit clickedTileID(d->id);
     this->update();
+}
+
+void ReversiTile::mousePressEvent(QMouseEvent*)
+{
+   // qDebug() << "press" << d->id;  // DEBUG
+   tileClicked();
+}
+
+void ReversiTile::click()
+{
+    // this is NOT a handler!
+    tileClicked();
+}
+
+void ReversiTile::setAppropriateSize(QSize tileSize, QSize boardSize)
+{
+    // divide the widget size by the tiles size and use whichever is smaller
+    int width = (boardSize.width() / tileSize.width() / 1.25);
+    int height = (boardSize.height() / tileSize.height() / 1.25);
+    int squareSize = qMin(width, height);
+    //qDebug() << squareSize;
+    this->setFixedSize(squareSize, squareSize);
 }
 
 void ReversiTile::paintEvent(QPaintEvent* e)

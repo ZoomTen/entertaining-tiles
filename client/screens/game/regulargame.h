@@ -26,6 +26,7 @@ public:
     void switchPlayers();
 
     ReversiTile* getTileAt(int row, int col);
+    ReversiTile* getTileAtIndex(int index);
     int getIndex(int row, int col);
     bool isInBoard(int row, int col);
     QPair<int, int> rowAndColFromID(int tileId);
@@ -58,6 +59,7 @@ private slots:
 
 protected:
     void resizeEvent(QResizeEvent *resize);
+    void keyPressEvent(QKeyEvent *e);
 };
 
 #endif // SINGLEPLAYERGAME_H
