@@ -47,6 +47,10 @@ MainScreen::MainScreen(QWidget *parent) :
 
     setGamepadActions();
     setButtonActions();
+
+    ui->scrollArea->setFocusPolicy(Qt::NoFocus);
+    ui->scrollArea_2->setFocusPolicy(Qt::NoFocus);
+    ui->vsComputerButton->setFocus();
 }
 
 MainScreen::~MainScreen()

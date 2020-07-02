@@ -16,6 +16,7 @@
 // entertaining games stuff
 #include <online/logindialog.h>
 #include <pauseoverlay.h>
+#include <focuspointer.h>
 
 // debug
 #include <QDebug>
@@ -53,6 +54,12 @@ void GameWindow::init()
 
     // set animation for the page switcher
     ui->mainSwitcher->setCurrentAnimation(tStackedWidget::Lift);
+
+    // enable focus pointer globally
+    /* this will be bugged in theDesk because Contemporary already comes
+     * with a focus pointer
+     */
+    FocusPointer::enableAutomaticFocusPointer();
 }
 
 void GameWindow::setupFunctions()
