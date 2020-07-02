@@ -4,7 +4,6 @@
 
 // the-libs
 #include <tapplication.h>
-#include <tcsdtools.h>
 #include <taboutdialog.h>
 
 // icon menu
@@ -28,7 +27,7 @@
 #include "onlinecontroller/onlinecontroller.h"
 
 struct GameWindowPrivate{
-    tCsdTools csd;
+
 };
 
 GameWindow::GameWindow(QWidget *parent) :
@@ -52,36 +51,8 @@ void GameWindow::init()
 
     d = new GameWindowPrivate();
 
-    // csd actions
-    d->csd.installMoveAction(ui->csdArea);
-    d->csd.installResizeAction(this);
-
-    // csd layout
-    QWidget* csd_widget = d->csd.csdBoxForWidget(this);
-
-    if(tCsdGlobal::windowControlsEdge() == tCsdGlobal::Left){
-        ui->leftSideCsd->addWidget(csd_widget);
-    } else {
-        ui->rightSideCsd->addWidget(csd_widget);
-    }
-
-    // fix icon size
-    ui->menuButton->setIconSize(SC_DPI_T(QSize(24, 24), QSize));
-    ui->menuButton->setFixedSize(SC_DPI(42), QWIDGETSIZE_MAX);
-
-    // create Help submenu
-    QMenu* menu = new QMenu(this);
-    menu->addAction(ui->actionSources); // Source code link
-    menu->addAction(ui->actionAbout);   // call About page
-    menu->addAction(ui->actionExit);        // Exit item
-
-    ui->menuButton->setMenu(menu);
-
     // set animation for the page switcher
     ui->mainSwitcher->setCurrentAnimation(tStackedWidget::Lift);
-
-    // disable focus for the button
-    ui->menuButton->setFocusPolicy(Qt::NoFocus);
 }
 
 void GameWindow::setupFunctions()
