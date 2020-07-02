@@ -90,10 +90,10 @@
            <item>
             <widget class="QCommandLinkButton" name="localMultiplayerButton">
              <property name="text">
-              <string>Multiplayer</string>
+              <string>Turn-Based Multiplayer</string>
              </property>
              <property name="description">
-              <string>Take turns playing the game</string>
+              <string>Take turns with a friend playing the game</string>
              </property>
             </widget>
            </item>
@@ -116,7 +116,7 @@
               <string>Online Multiplayer</string>
              </property>
              <property name="description">
-              <string>Play with your friends</string>
+              <string>Play with a friend over the Internet</string>
              </property>
             </widget>
            </item>
@@ -243,8 +243,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>368</width>
-                <height>427</height>
+                <width>186</width>
+                <height>244</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_4">

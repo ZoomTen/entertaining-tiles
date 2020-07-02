@@ -79,6 +79,9 @@ void GameWindow::init()
 
     // set animation for the page switcher
     ui->mainSwitcher->setCurrentAnimation(tStackedWidget::Lift);
+
+    // disable focus for the button
+    ui->menuButton->setFocusPolicy(Qt::NoFocus);
 }
 
 void GameWindow::setupFunctions()

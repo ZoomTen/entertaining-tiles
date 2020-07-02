@@ -33,6 +33,10 @@ public:
 signals:
     void windowResized(QSize tileSize, QSize boardSize);
     void playerChanged(int player);
+    void numMovesChanged(int numMoves);
+
+    //QList<int> tileCounts = {empty, dark, light}
+    void tileCountChanged(QList<int> tileCounts);
 
 public slots:
     void startGame(int size, int gameType);
@@ -43,6 +47,7 @@ private:
 
     void clearTiles();
     void calculateLegalMoves(int size);
+    void refreshTileCount(int size);
 
     QMap<QString, QVariant> getFlippable(int from,
                                          int row_offset, int col_offset,

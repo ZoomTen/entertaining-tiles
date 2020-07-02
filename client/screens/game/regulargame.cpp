@@ -14,6 +14,12 @@ struct RegularGamePrivate{
     int squareBoardSize;
 
     int currentPlayer;
+
+    int firstPlayerRunOut; // first player to run out of
+
+    QList<QString> playerNames;
+
+    QVector<bool> calculatedMoves;
 };
 
 RegularGame::RegularGame(QWidget *parent) :
@@ -22,6 +28,8 @@ RegularGame::RegularGame(QWidget *parent) :
 {
     ui->setupUi(this);
     d = new RegularGamePrivate();
+
+    d->playerNames = {tr("Empty"), tr("Dark"), tr("Light")};
 }
 
 RegularGame::~RegularGame()
@@ -90,6 +98,37 @@ QPair<int, int> RegularGame::rowAndColFromID(int tileId)
     }
 }
 
+void RegularGame::refreshTileCount(int size)
+{
+    int darkCount = 0;
+    int lightCount = 0;
+    int emptyCount = 0;
+    for (int row = 0; row < size; ++row){
+        for (int col = 0; col < size; ++col){
+            switch (getTileAt(row, col)->getType()){
+            case ReversiTile::Dark:
+                darkCount++;
+                break;
+            case ReversiTile::Light:
+                lightCount++;
+                break;
+            case ReversiTile::Empty:
+                emptyCount++;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    QList<int> tileCounts;
+    tileCounts.append(emptyCount);
+    tileCounts.append(darkCount);
+    tileCounts.append(lightCount);
+
+    emit tileCountChanged(tileCounts);
+}
+
 // game control
 
 QMap<QString, QVariant> RegularGame::getFlippable(int from, int row_offset, int col_offset, int row, int col)
@@ -153,6 +192,10 @@ void RegularGame::startGame(int size, int gameType)
         clearTiles();
     }
 
+    d->squareBoardSize = size;
+    d->gameType = gameType;
+    d->firstPlayerRunOut = ReversiTile::Empty;
+
     // create new tiles
     for (int row = 0; row < size; ++row){
         for (int col = 0; col < size; ++col){
@@ -174,6 +217,12 @@ void RegularGame::startGame(int size, int gameType)
         }
     }
 
+    /* initialize calculated legal moves grid
+     * this isn't used for main functions, but rather
+     * to be used for hints and computer moves
+     */
+    d->calculatedMoves.resize(size * size);
+
     // default positions
     // TODO: this assumes a 8x8 board.
     d->tiles[27]->setType(ReversiTile::Light);
@@ -181,12 +230,58 @@ void RegularGame::startGame(int size, int gameType)
     d->tiles[35]->setType(ReversiTile::Dark);
     d->tiles[36]->setType(ReversiTile::Light);
 
-    d->gameType = gameType;
+    // UI functions
+    ui->noMoreMoves->hide();
 
-    d->squareBoardSize = size;
+    connect(this, &RegularGame::numMovesChanged,
+            this, [=](int movesLeft){
+        qDebug() << "Moves left:" << movesLeft;
+        if (movesLeft == 0){
+            // pass it back to the other player
+
+            if (d->firstPlayerRunOut == 0){
+                d->firstPlayerRunOut = d->currentPlayer;
+                switchPlayers();
+                calculateLegalMoves(size); // calculate moves for the other player
+            } else {
+                // the game ends here
+                ui->noMoreMoves->show();
+            }
+        } else {
+            /* clear "first player to run out of moves" flag since
+             * we can still play
+             */
+            d->firstPlayerRunOut = 0;
+        }
+    });
+
+    connect(this, &RegularGame::tileCountChanged,
+            this, [=](QList<int> tileCounts){
+        ui->darkCount->setText(tr("Dark: %1").arg(tileCounts[1]));
+        ui->lightCount->setText(tr("Light: %1").arg(tileCounts[2]));
+    });
+
+    connect(this, &RegularGame::playerChanged,
+            this, [=](int player){
+        ui->playerName->setText(d->playerNames[player]);
+    });
+
+
+    connect(ui->hintButton, &QPushButton::clicked,
+            this, [=](bool){
+        for (int i = 0; i < (d->squareBoardSize*d->squareBoardSize); ++i) {
+            if(d->calculatedMoves[i]){
+                d->tiles[i]->flashTile();
+                break;
+            }
+        }
+    });
 
     // TODO: make first player adjustable
     setActivePlayer(ReversiTile::Dark); // dark goes first
+
+    // count all the tiles
+    refreshTileCount(d->squareBoardSize);
 
     calculateLegalMoves(size);
 }
@@ -198,11 +293,15 @@ void RegularGame::calculateLegalMoves(int size)
      *
      * highlightable tile == player can perform move on that tile
      */
+    int numLegalMoves = 0;
     for (int row = 0; row < size; ++row){
         for (int col = 0; col < size; ++col){
 
             // clear out the highlightable for the tile
             getTileAt(row, col)->setHighlightable(false);
+
+            // similarly, clear out our list "cache"
+            d->calculatedMoves[getIndex(row,col)] = false;
 
             // check every direction
             if  (getTileAt(row, col)->getType() == ReversiTile::Empty){
@@ -222,12 +321,19 @@ void RegularGame::calculateLegalMoves(int size)
                     // set legal move on the origin tile
                     ReversiTile* tile = getTileAt(row, col);
                     tile->setHighlightable(true);
+
+                    // set it on our "cache" too
+                    d->calculatedMoves[getIndex(row,col)] = true;
+
+                    // count available moves
+                    ++numLegalMoves;
                 }
             }
             }
             }
         }
     }
+    emit numMovesChanged(numLegalMoves);
 }
 
 void RegularGame::processMove(int tileId)
@@ -264,6 +370,7 @@ void RegularGame::processMove(int tileId)
         // take turns
         switchPlayers();
         calculateLegalMoves(d->squareBoardSize);
+        refreshTileCount(d->squareBoardSize);
     }
 }
 
