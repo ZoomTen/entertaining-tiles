@@ -33,6 +33,8 @@ public:
 
     int getID();
 
+    void flashTile();
+
 signals:
     void clickedTileID(int id);
 
@@ -41,7 +43,6 @@ public slots:
 
 private:
     ReversiTilePrivate* d;
-    void flashTile();
     void setFlashingAnimation(int flashingAnim);
 
 protected:

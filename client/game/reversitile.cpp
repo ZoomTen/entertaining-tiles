@@ -1,6 +1,7 @@
 #include "reversitile.h"
 
 #include <QPainter>
+#include <QPainterPath>
 
 #include <tvariantanimation.h>
 
@@ -78,7 +79,7 @@ int ReversiTile::getID()
 
 void ReversiTile::flashTile()
 {
-    /* flashTile shall only be called on changed tiles
+    /* flashTile shall only be called on changed tiles (and hints)
      * hopefully this causes no problems...
      */
 
@@ -93,11 +94,6 @@ void ReversiTile::flashTile()
         d->highlightFlashOpacity = value.toInt();
         this->update();
     });
-    connect(&d->highlightFlashAnimation, &tVariantAnimation::finished,
-            this, [=](){
-        d->highlighted = false;
-        this->update();
-    });
 }
 
 void ReversiTile::setFlashingAnimation(int flashingAnim)
@@ -107,7 +103,7 @@ void ReversiTile::setFlashingAnimation(int flashingAnim)
         d->highlightFlashAnimation.setStartValue(0); // fade in
         d->highlightFlashAnimation.setEndValue(96);  // highlight opacity
         d->highlightFlashAnimation.setEasingCurve(QEasingCurve::OutBack);
-        d->highlightFlashAnimation.setDuration(128);
+        d->highlightFlashAnimation.setDuration(256);
         break;
     case FlashOut:
         d->highlightFlashAnimation.setStartValue(255); // fade out
@@ -197,7 +193,24 @@ void ReversiTile::paintEvent(QPaintEvent* e)
     QPainter p(this);
 
     // draw background
-    p.fillRect(0, 0, this->width(), this->height(), fill);
+    p.setPen(Qt::transparent);
+    p.setBrush(fill);
+    p.setRenderHint(QPainter::Antialiasing);
+
+    if (d->type != ReversiTile::Empty){
+        // dark and light tiles get circles
+        p.drawEllipse(0, 0, this->width(), this->height());
+    } else {
+        QPainterPath path;
+        path.addRoundedRect(QRectF( (this->width() * 0.1),
+                                    (this->height() * 0.1),
+                                    (this->width() * 0.8),
+                                    (this->height() * 0.8)
+                                  ),
+                            6,
+                            6);
+        p.fillPath(path, fill);
+    }
 
     // hovered over
     if (d->highlighted){
@@ -207,7 +220,9 @@ void ReversiTile::paintEvent(QPaintEvent* e)
             color.setRgb(244,55,55,d->highlightFlashOpacity);
         }
         fill.setColor(color);
-        p.fillRect(0, 0, this->width(), this->height(), fill);
+        p.setPen(Qt::transparent);
+        p.setBrush(fill);
+        p.drawEllipse(0, 0, this->width(), this->height());
     }
 
     // fallback here
