@@ -9,7 +9,9 @@
 
 #include <QKeyEvent>
 
+#include <QTime>
 #include <QTimer>
+#include <QElapsedTimer>
 
 struct RegularGamePrivate{
     QVector<ReversiTile*> tiles;
@@ -26,6 +28,9 @@ struct RegularGamePrivate{
     QVector<bool> calculatedMoves;
 
     QPair<int, int> focusedCoords;
+
+    QElapsedTimer gameTime;
+    QTimer updater;
 };
 
 RegularGame::RegularGame(QWidget *parent) :
@@ -266,6 +271,17 @@ void RegularGame::startGame(int size, int gameType)
     // UI functions
     ui->noMoreMoves->hide();
 
+    // start clock
+    d->gameTime.start();
+    d->updater.setInterval(1000);
+    connect(&d->updater, &QTimer::timeout,
+            this,       [=]{
+        qDebug() << "QF";
+        QTime statusTimer = QTime::fromMSecsSinceStartOfDay(d->gameTime.elapsed());
+        ui->timerDisplay->setText(tr("Time: %1").arg(statusTimer.toString("mm:ss")));
+    });
+    d->updater.start();
+
     connect(this, &RegularGame::numMovesChanged,
             this, [=](int movesLeft){
         qDebug() << "Moves left:" << movesLeft;
@@ -279,6 +295,7 @@ void RegularGame::startGame(int size, int gameType)
             } else {
                 // the game ends here
                 ui->noMoreMoves->show();
+                d->updater.stop();
             }
         } else {
             /* clear "first player to run out of moves" flag since
