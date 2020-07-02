@@ -28,9 +28,6 @@ ReversiTile::ReversiTile(QWidget *parent, int id, int type) : QWidget(parent)
     this->setAttribute(Qt::WA_TranslucentBackground);
 
     this->setMouseTracking(true);
-
-    // init hover & flash animation
-    d->highlightFlashOpacity = 0;
 }
 
 ReversiTile::~ReversiTile()
@@ -54,6 +51,7 @@ void ReversiTile::flip()
 void ReversiTile::setType(int type)
 {
     d->type = type;
+    this->update();
 }
 
 int ReversiTile::getType()
@@ -65,6 +63,7 @@ void ReversiTile::setHighlightable(bool highlightable)
 {
     // highlightable if it is a legal move
     d->highlightable = highlightable;
+    this->update();
 }
 
 bool ReversiTile::getHighlightable()
@@ -108,7 +107,7 @@ void ReversiTile::setFlashingAnimation(int flashingAnim)
         d->highlightFlashAnimation.setStartValue(0); // fade in
         d->highlightFlashAnimation.setEndValue(96);  // highlight opacity
         d->highlightFlashAnimation.setEasingCurve(QEasingCurve::OutBack);
-        d->highlightFlashAnimation.setDuration(500);
+        d->highlightFlashAnimation.setDuration(128);
         break;
     case FlashOut:
         d->highlightFlashAnimation.setStartValue(255); // fade out
@@ -127,14 +126,16 @@ void ReversiTile::setAppropriateSize(QSize tileSize, QSize boardSize)
     int width = (boardSize.width() / tileSize.width() / 1.25);
     int height = (boardSize.height() / tileSize.height() / 1.25);
     int squareSize = qMin(width, height);
-    qDebug() << squareSize;
+    //qDebug() << squareSize;
     this->setFixedSize(squareSize, squareSize);
 }
 
 void ReversiTile::mousePressEvent(QMouseEvent*)
 {
-    qDebug() << "press" << d->id;  // DEBUG
-    if(d->type != Empty) flashTile(); // DEBUG
+   // qDebug() << "press" << d->id;  // DEBUG
+    if (d->highlightable){
+        qDebug() << "HIGHLIGHTABLE";
+    }
     emit clickedTileID(d->id);
     this->update();
 }
@@ -142,7 +143,7 @@ void ReversiTile::mousePressEvent(QMouseEvent*)
 void ReversiTile::enterEvent(QEvent*)
 {
     if (d->highlightable){
-        qDebug() << "highlighted";  // DEBUG
+        //qDebug() << "highlighted";  // DEBUG
 
         // only empty tiles can be highlighted
         if (d->type == Empty){
@@ -161,7 +162,7 @@ void ReversiTile::enterEvent(QEvent*)
 
 void ReversiTile::leaveEvent(QEvent*)
 {
-    qDebug() << "off highlight";  // DEBUG
+    //qDebug() << "off highlight";  // DEBUG
     d->highlighted = false;
     this->update();
 }
@@ -201,9 +202,9 @@ void ReversiTile::paintEvent(QPaintEvent* e)
     // hovered over
     if (d->highlighted){
         if (d->type == Light){
-            color.setRgb(55,55,55,d->highlightFlashOpacity);
+            color.setRgb(55,244,55,d->highlightFlashOpacity);
         } else {
-            color.setRgb(244,244,244,d->highlightFlashOpacity);
+            color.setRgb(244,55,55,d->highlightFlashOpacity);
         }
         fill.setColor(color);
         p.fillRect(0, 0, this->width(), this->height(), fill);

@@ -2,6 +2,7 @@
 #define SINGLEPLAYERGAME_H
 
 #include <QWidget>
+#include "game/reversitile.h"
 
 namespace Ui {
 class RegularGame;
@@ -22,11 +23,16 @@ public:
     };
 
     void setActivePlayer(int player);
+    void switchPlayers();
+
+    ReversiTile* getTileAt(int row, int col);
     int getIndex(int row, int col);
     bool isInBoard(int row, int col);
+    QPair<int, int> rowAndColFromID(int tileId);
 
 signals:
     void windowResized(QSize tileSize, QSize boardSize);
+    void playerChanged(int player);
 
 public slots:
     void startGame(int size, int gameType);
@@ -37,6 +43,10 @@ private:
 
     void clearTiles();
     void calculateLegalMoves(int size);
+
+    QMap<QString, QVariant> getFlippable(int from,
+                                         int row_offset, int col_offset,
+                                         int row, int col);
 
 private slots:
     void processMove(int tileId);
