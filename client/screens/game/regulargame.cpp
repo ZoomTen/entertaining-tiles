@@ -17,6 +17,8 @@
 
 #include <libentertaining/musicengine.h>
 
+#include "screens/pause/pausescreen.h"
+
 struct RegularGamePrivate{
     QVector<ReversiTile*> tiles;
     int gameType;
@@ -346,8 +348,41 @@ void RegularGame::startGame(int size, int gameType)
 
 void RegularGame::pauseSession()
 {
-    qDebug() << "Game should have paused here";
     d->bgMusic->pauseMusic();
+
+    MusicEngine::pauseBackgroundMusic();
+    MusicEngine::playSoundEffect(MusicEngine::Pause);
+
+    PauseScreen* screen = new PauseScreen(this);
+    connect(screen, &PauseScreen::resume, this, [=] {
+        screen->deleteLater();
+        d->bgMusic->resumeMusic();
+        ReversiTile* focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+        focused->setFocus();
+        this->setFocusProxy(focused);
+//        d->tiles.first()->setFocus();
+    });
+    connect(screen, &PauseScreen::newGame, this, [=] {
+//        screen->deleteLater();
+//        startGame(d->width, boardDimensions().height(), d->mines);
+    });
+    connect(screen, &PauseScreen::mainMenu, this, [=] {
+        screen->deleteLater();
+//        emit returnToMainMenu();
+    });
+    connect(screen, &PauseScreen::provideMetadata, this, [=](QVariantMap* metadata) {
+        //TODO
+//        QStringList description;
+//        description.append(tr("%1 × %2 board").arg(d->width).arg(boardDimensions().height()));
+//        description.append(tr("%1 mines").arg(d->mines));
+//        description.append(tr("%1 flagged").arg(d->mines - d->minesRemaining));
+//        description.append(tr("%1 mines to go").arg(d->minesRemaining));
+//        description.append(tr("%1% cleared").arg(static_cast<int>(static_cast<float>(d->remainingTileCount) / d->tiles.count() * 100)));
+
+//        metadata->insert("description", description.join(" ∙ "));
+    });
+//    connect(screen, &PauseScreen::provideSaveData, this, &GameScreen::saveGame);
+    screen->show();
 }
 
 void RegularGame::calculateLegalMoves(int size)

@@ -16,7 +16,7 @@ public:
     void startMusic();
     void stopMusic();
     void pauseMusic();
-    void unpauseMusic();
+    void resumeMusic();
 
 private:
     BackgroundMusicPrivate* d;

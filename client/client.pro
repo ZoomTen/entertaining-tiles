@@ -21,7 +21,8 @@ SOURCES += \
     screens/main/mainscreen.cpp \
     screens/online/menu/onlinemenuscreen.cpp \
     screens/online/onlinescreen.cpp \
-    screens/online/pending/onlinependingscreen.cpp
+    screens/online/pending/onlinependingscreen.cpp \
+    screens/pause/pausescreen.cpp
 
 HEADERS += \
     audio/backgroundmusic.h \
@@ -32,7 +33,8 @@ HEADERS += \
     screens/main/mainscreen.h \
     screens/online/menu/onlinemenuscreen.h \
     screens/online/onlinescreen.h \
-    screens/online/pending/onlinependingscreen.h
+    screens/online/pending/onlinependingscreen.h \
+    screens/pause/pausescreen.h
 
 FORMS += \
     gamewindow.ui \
@@ -40,7 +42,8 @@ FORMS += \
     screens/main/mainscreen.ui \
     screens/online/menu/onlinemenuscreen.ui \
     screens/online/onlinescreen.ui \
-    screens/online/pending/onlinependingscreen.ui
+    screens/online/pending/onlinependingscreen.ui \
+    screens/pause/pausescreen.ui
 
 #### Automatic naming ####
 # fix app name

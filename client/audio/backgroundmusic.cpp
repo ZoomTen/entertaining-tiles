@@ -117,6 +117,7 @@ BackgroundMusic::BackgroundMusic(QObject *parent, QString filename)
         connect(this, &BackgroundMusic::musicPaused,
                 this, [=]{
             if (!d->audioPaused){
+                d->audio_buffer->close();
                 d->audio->stop();
                 d->audioPaused = true;
             }
@@ -126,6 +127,7 @@ BackgroundMusic::BackgroundMusic(QObject *parent, QString filename)
         connect(this, &BackgroundMusic::musicUnpaused,
                 this, [=]{
             if (d->audioPaused){
+                d->audio_buffer->open(QIODevice::ReadOnly);
                 d->audio->start(d->audio_buffer);
                 d->audioPaused = false;
             }
@@ -155,7 +157,7 @@ void BackgroundMusic::pauseMusic()
     emit musicPaused();
 }
 
-void BackgroundMusic::unpauseMusic()
+void BackgroundMusic::resumeMusic()
 {
     emit musicUnpaused();
 }
