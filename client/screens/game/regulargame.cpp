@@ -13,24 +13,26 @@
 #include <QTimer>
 #include <QElapsedTimer>
 
+#include "audio/backgroundmusic.h"
+
+#include <libentertaining/musicengine.h>
+
 struct RegularGamePrivate{
     QVector<ReversiTile*> tiles;
     int gameType;
-
     int squareBoardSize;
-
     int currentPlayer;
-
-    int firstPlayerRunOut; // first player to run out of
+    int firstPlayerRunOut; // first player to run out of moves
 
     QList<QString> playerNames;
 
     QVector<bool> calculatedMoves;
-
     QPair<int, int> focusedCoords;
 
     QElapsedTimer gameTime;
     QTimer updater;
+
+    BackgroundMusic* bgMusic;
 };
 
 RegularGame::RegularGame(QWidget *parent) :
@@ -174,7 +176,7 @@ QMap<QString, QVariant> RegularGame::getFlippable(int from, int row_offset, int 
      * row_offset and col_offset (call that a "vector") to see if there
      * is a flippable tile 1 step in that direction
      *
-     * that tile is only flippable if it is the other players', and the
+     * that tile is only flippable if it is the other players', and that the
      * tile 1 step next to it is ours
      *
      * if so, we return a QMap specifying if we can flip a tile <bool>,
@@ -276,7 +278,6 @@ void RegularGame::startGame(int size, int gameType)
     d->updater.setInterval(1000);
     connect(&d->updater, &QTimer::timeout,
             this,       [=]{
-        qDebug() << "QF";
         QTime statusTimer = QTime::fromMSecsSinceStartOfDay(d->gameTime.elapsed());
         ui->timerDisplay->setText(tr("Time: %1").arg(statusTimer.toString("mm:ss")));
     });
@@ -336,16 +337,17 @@ void RegularGame::startGame(int size, int gameType)
     calculateLegalMoves(size);
 
     // set focus
-    QTimer::singleShot(100, this, [=]{
-        d->tiles.first()->setFocus();
-        this->setFocusProxy(d->tiles.first());
-    });
+    d->tiles.first()->setFocus();
+    this->setFocusProxy(d->tiles.first());
 
+    d->bgMusic = new BackgroundMusic(this, ":/audio/bgm/game.mod");
+    d->bgMusic->startMusic();
 }
 
 void RegularGame::pauseSession()
 {
     qDebug() << "Game should have paused here";
+    d->bgMusic->pauseMusic();
 }
 
 void RegularGame::calculateLegalMoves(int size)
@@ -408,6 +410,8 @@ void RegularGame::processMove(int tileId)
     int row = rowCol.first;
     int col = rowCol.second;
 
+    bool anyFlipped = false;
+
     if (d->tiles[tileId]->getHighlightable()){
         for (int row_offset = -1; row_offset < 2; ++row_offset){
         for (int col_offset = -1; col_offset < 2; ++col_offset){
@@ -426,8 +430,15 @@ void RegularGame::processMove(int tileId)
                 // add our tile to the board
                 d->tiles[tileId]->setType(d->currentPlayer);
                 flippable["tileToFlip"].value<ReversiTile*>()->flip();
+
+                anyFlipped = true;
             }
         }
+        }
+
+        if (anyFlipped){
+            // play sound
+            MusicEngine::playSoundEffect(MusicEngine::Warning);
         }
         // take turns
         switchPlayers();
