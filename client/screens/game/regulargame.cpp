@@ -469,8 +469,10 @@ void RegularGame::resizeEvent(QResizeEvent*)
 void RegularGame::keyPressEvent(QKeyEvent *e)
 {
     ReversiTile* focused;
-    // aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    int newID;
+
     switch (e->key()) {
+
     case Qt::Key_Up:
         if (--d->focusedCoords.first > -1){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
@@ -478,6 +480,7 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
             this->setFocusProxy(focused);
         } else ++d->focusedCoords.first;
         break;
+
     case Qt::Key_Down:
         if (++d->focusedCoords.first < d->squareBoardSize){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
@@ -485,6 +488,7 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
             this->setFocusProxy(focused);
         } else --d->focusedCoords.first;
         break;
+
     case Qt::Key_Left:
         if (--d->focusedCoords.second > -1){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
@@ -492,6 +496,7 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
             this->setFocusProxy(focused);
         } else ++d->focusedCoords.second;
         break;
+
     case Qt::Key_Right:
         if (++d->focusedCoords.second < d->squareBoardSize){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
@@ -499,22 +504,50 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
             this->setFocusProxy(focused);
         } else --d->focusedCoords.second;
         break;
+
     case Qt::Key_Enter:
     case Qt::Key_Return:
         focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
         focused->click();   // simulate click
         break;
+
     case Qt::Key_H:
         // Hint button hardcode to H
         ui->hintButton->click();
         break;
+
     case Qt::Key_Escape:
         pauseSession();
+        break;
+
+    case Qt::Key_Tab:
+        // forwards focus
+        newID = getIndex(d->focusedCoords.first,d->focusedCoords.second)+1;
+        if (newID >= (d->squareBoardSize*d->squareBoardSize)) newID = 0;
+        focused = getTileAtIndex(newID);
+        focused->setFocus();
+        this->setFocusProxy(focused);
+        d->focusedCoords = rowAndColFromID(newID);
+        break;
+
+    case Qt::Key_Backtab:
+        // reverse focus
+        newID = getIndex(d->focusedCoords.first,d->focusedCoords.second)-1;
+        if (newID < 0) newID = (d->squareBoardSize*d->squareBoardSize)-1;
+        focused = getTileAtIndex(newID);
+        focused->setFocus();
+        this->setFocusProxy(focused);
+        d->focusedCoords = rowAndColFromID(newID);
         break;
     default:
         break;
     }
-    qDebug() << d->focusedCoords;
+}
+
+bool RegularGame::focusNextPrevChild(bool)
+{
+    // focusing is handled manually by keyPressEvent
+    return false;
 }
 
 void RegularGame::on_pauseButton_clicked()

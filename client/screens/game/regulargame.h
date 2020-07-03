@@ -64,6 +64,7 @@ private slots:
 protected:
     void resizeEvent(QResizeEvent *resize);
     void keyPressEvent(QKeyEvent *e);
+    bool focusNextPrevChild(bool next);
 };
 
 #endif // SINGLEPLAYERGAME_H
