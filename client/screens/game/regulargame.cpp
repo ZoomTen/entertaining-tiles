@@ -145,7 +145,7 @@ RegularGame::RegularGame(QWidget *parent) :
 
         QTimer::singleShot(5500, this, [=]{
             d->bgMusic->stopMusic();
-            d->bgMusic = new BackgroundMusic(this, ":/audio/bgm/game-online.mod");
+            d->bgMusic = new BackgroundMusic(this, ":/audio/bgm/game-over.mod");
             d->bgMusic->startMusic();
 
             if (d->darkLightCount.first != d->darkLightCount.second){

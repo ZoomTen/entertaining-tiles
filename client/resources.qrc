@@ -3,5 +3,6 @@
         <file>audio/bgm/game.mod</file>
         <file>audio/bgm/game-online.mod</file>
         <file>audio/bgm/game-lobby.mod</file>
+        <file>audio/bgm/game-over.mod</file>
     </qresource>
 </RCC>
