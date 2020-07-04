@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
         a.setApplicationName("Entertaining Tiles Blueprint");
         a.setDesktopFileName(DESKTOP_NAME);
     #else
-        a.setApplicationName("Entertaining Tiles");
+        a.setApplicationName("Entertaining Reversi");
         a.setDesktopFileName(DESKTOP_NAME);
     #endif
 

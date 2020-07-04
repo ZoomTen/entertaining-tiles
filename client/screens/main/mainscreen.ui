@@ -36,7 +36,7 @@
        <item>
         <widget class="tTitleLabel" name="mainMenuTitle">
          <property name="text">
-          <string>Main Menu</string>
+          <string>Entertaining Reversi</string>
          </property>
         </widget>
        </item>
