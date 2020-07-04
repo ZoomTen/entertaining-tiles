@@ -15,6 +15,8 @@ struct ReversiTilePrivate{
 
     int highlightFlashOpacity;
     tVariantAnimation highlightFlashAnimation;
+
+    bool highlightIsVisible;
 };
 
 ReversiTile::ReversiTile(QWidget *parent, int id, int type) : QWidget(parent)
@@ -24,6 +26,8 @@ ReversiTile::ReversiTile(QWidget *parent, int id, int type) : QWidget(parent)
     d->type = type;
     d->highlightable = false;   // by default this is not a legal move tile
     d->highlighted = false; // tile hovered over
+
+    d->highlightIsVisible = true;
 
     // let QPainter set the background for us
     this->setAttribute(Qt::WA_TranslucentBackground);
@@ -128,6 +132,7 @@ void ReversiTile::tileSelected()
 
         // only empty tiles can be highlighted
         if (d->type == Empty){
+        if (d->highlightIsVisible){
             d->highlighted = true;
 
             setFlashingAnimation(Fading);
@@ -137,6 +142,7 @@ void ReversiTile::tileSelected()
                 d->highlightFlashOpacity = value.toInt();
                 this->update();
             });
+        }
         }
     }
 }
@@ -201,6 +207,11 @@ void ReversiTile::setAppropriateSize(QSize tileSize, QSize boardSize)
     int squareSize = qMin(width, height);
     //qDebug() << squareSize;
     this->setFixedSize(squareSize, squareSize);
+}
+
+void ReversiTile::setHighlightIsVisible(bool highlightVisible)
+{
+    d->highlightIsVisible = highlightVisible;
 }
 
 void ReversiTile::paintEvent(QPaintEvent* e)

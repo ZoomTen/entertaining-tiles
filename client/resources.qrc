@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>audio/bgm/game.mod</file>
+        <file>audio/bgm/game-online.mod</file>
     </qresource>
 </RCC>

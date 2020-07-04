@@ -42,6 +42,7 @@ signals:
 
 public slots:
     void setAppropriateSize(QSize tileSize, QSize boardSize);
+    void setHighlightIsVisible(bool highlightVisible);
 
 private:
     ReversiTilePrivate* d;

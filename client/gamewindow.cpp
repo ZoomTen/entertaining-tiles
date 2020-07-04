@@ -65,9 +65,9 @@ void GameWindow::init()
 void GameWindow::setupFunctions()
 {
     // Register local play
-    connect(ui->mainScreen, &MainScreen::beginPlay, this, [=](int gameType){
+    connect(ui->mainScreen, &MainScreen::beginPlay, this, [=](int gameType, QList<QString> names){
         // setup game
-        ui->gameScreen->startGame(8, gameType); // TODO: make width and height adjustable
+        ui->gameScreen->startGame(8, gameType, names); // TODO: make width and height adjustable
         ui->mainSwitcher->setCurrentWidget(ui->gameScreen);
     });
 

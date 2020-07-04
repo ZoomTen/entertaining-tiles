@@ -17,7 +17,7 @@ public:
 
 signals:
     void beginOnline();
-    void beginPlay(int gameType);
+    void beginPlay(int gameType, QList<QString> names);
 
 private:
     Ui::MainScreen *ui;

@@ -3,9 +3,12 @@
 
 // entertaining
 #include <gamepadbuttons.h>
+#include <textinputoverlay.h>
 
 // game modes
 #include "screens/game/regulargame.h"
+
+#include <QTimer>
 
 MainScreen::MainScreen(QWidget *parent) :
     QWidget(parent),
@@ -99,8 +102,46 @@ void MainScreen::setButtonActions()
         emit beginOnline();
     });
 
+    connect(ui->vsComputerButton, &QCommandLinkButton::clicked, this, [=]{
+        bool canceled;
+
+        QString playerName;
+
+        playerName = TextInputOverlay::getText(this,
+                                                   tr("What is your name?"),
+                                                   &canceled,
+                                                   "Me");
+        if (canceled) return;
+
+        emit beginPlay(RegularGame::VsComputer, {tr("Empty"),
+                                                 playerName,
+                                                 tr("Computer")});
+    });
+
     connect(ui->localMultiplayerButton, &QCommandLinkButton::clicked, this, [=]{
-        emit beginPlay(RegularGame::TakeTurns);
+        bool canceled;
+
+        QString darkPlayerName, lightPlayerName;
+
+        askPlayer1:
+            darkPlayerName = TextInputOverlay::getText(this,
+                                                       tr("What is your name?"),
+                                                       &canceled,
+                                                       "Me");
+            if (canceled) return;
+        askPlayer2:
+            lightPlayerName = TextInputOverlay::getText(this,
+                                                       tr("What is your friend's name?"),
+                                                       &canceled,
+                                                       "Friend");
+            if (canceled) goto askPlayer1;
+
+        ui->localMultiplayerButton->setDisabled(true);
+        QTimer::singleShot(500, this, [=]{
+            emit beginPlay(RegularGame::TakeTurns, {tr("Empty"),
+                                                     darkPlayerName,
+                                                     lightPlayerName});
+        });
     });
 
     connect(ui->infoButton, &QCommandLinkButton::clicked, this, [=]{

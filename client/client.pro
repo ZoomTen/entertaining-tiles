@@ -18,6 +18,7 @@ SOURCES += \
     main.cpp \
     onlinecontroller/onlinecontroller.cpp \
     screens/game/regulargame.cpp \
+    screens/game/turnsscreen.cpp \
     screens/main/mainscreen.cpp \
     screens/online/menu/onlinemenuscreen.cpp \
     screens/online/onlinescreen.cpp \
@@ -30,6 +31,7 @@ HEADERS += \
     gamewindow.h \
     onlinecontroller/onlinecontroller.h \
     screens/game/regulargame.h \
+    screens/game/turnsscreen.h \
     screens/main/mainscreen.h \
     screens/online/menu/onlinemenuscreen.h \
     screens/online/onlinescreen.h \
@@ -39,6 +41,7 @@ HEADERS += \
 FORMS += \
     gamewindow.ui \
     screens/game/regulargame.ui \
+    screens/game/turnsscreen.ui \
     screens/main/mainscreen.ui \
     screens/online/menu/onlinemenuscreen.ui \
     screens/online/onlinescreen.ui \

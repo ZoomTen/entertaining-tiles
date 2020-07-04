@@ -22,14 +22,16 @@ public:
         TakeTurns
     };
 
-    void setActivePlayer(int player);
-    void switchPlayers();
+    virtual void setActivePlayer(int player);
+    virtual void switchPlayers();
 
     ReversiTile* getTileAt(int row, int col);
     ReversiTile* getTileAtIndex(int index);
     int getIndex(int row, int col);
     bool isInBoard(int row, int col);
     QPair<int, int> rowAndColFromID(int tileId);
+
+    bool playerIsComputer();
 
 signals:
     void windowResized(QSize tileSize, QSize boardSize);
@@ -39,27 +41,32 @@ signals:
     //QList<int> tileCounts = {empty, dark, light}
     void tileCountChanged(QList<int> tileCounts);
 
+    void setHighlightVisibility(bool);
+
 public slots:
-    void startGame(int size, int gameType);
+    virtual void startGame(int size, int gameType, QList<QString> names);
 
 private:
     Ui::RegularGame *ui;
     RegularGamePrivate* d;
 
-    void clearTiles();
-    void calculateLegalMoves(int size);
+    virtual void clearTiles();
+    int calculateLegalMoves(int size);
     void refreshTileCount(int size);
 
     QMap<QString, QVariant> getFlippable(int from,
                                          int row_offset, int col_offset,
                                          int row, int col);
 
-    void pauseSession();
+    virtual void pauseSession();
+    virtual void performComputer();
+    virtual void flipRelevantTiles(int row, int col);
+    virtual void playersTurnScreen();
 
 private slots:
-    void processMove(int tileId);
+    virtual void processMove(int tileId);
 
-    void on_pauseButton_clicked();
+    virtual void on_pauseButton_clicked();
 
 protected:
     void resizeEvent(QResizeEvent *resize);

@@ -18,13 +18,24 @@
 #include <libentertaining/musicengine.h>
 
 #include "screens/pause/pausescreen.h"
+#include "screens/game/turnsscreen.h"
+
+// CPP
+#include <random>
 
 struct RegularGamePrivate{
     QVector<ReversiTile*> tiles;
     int gameType;
     int squareBoardSize;
+
     int currentPlayer;
+    bool isComputer;
+
     int firstPlayerRunOut; // first player to run out of moves
+
+    bool playerCanPlay;
+
+    bool showTurnsScreen;
 
     QList<QString> playerNames;
 
@@ -44,8 +55,6 @@ RegularGame::RegularGame(QWidget *parent) :
     ui->setupUi(this);
     d = new RegularGamePrivate();
 
-    d->playerNames = {tr("Empty"), tr("Dark"), tr("Light")};
-
     // bind gamepad options
     // assign "A" / Enter button to flip tiles
     ui->gamepadHud->setButtonText(QGamepadManager::ButtonA, tr("Flip Tile"));
@@ -58,7 +67,6 @@ RegularGame::RegularGame(QWidget *parent) :
     // assign "Start" / Esc button to pause
     ui->gamepadHud->setButtonText(QGamepadManager::ButtonStart, tr("Pause"));
     ui->gamepadHud->bindKey(Qt::Key_Escape, QGamepadManager::ButtonStart);
-
 
 }
 
@@ -75,6 +83,7 @@ void RegularGame::setActivePlayer(int player)
 {
     d->currentPlayer = player;
     emit playerChanged(player);
+    playersTurnScreen();
 }
 
 void RegularGame::switchPlayers()
@@ -88,6 +97,30 @@ void RegularGame::switchPlayers()
         break;
     default:
         break;
+    }
+}
+
+bool RegularGame::playerIsComputer()
+{
+    return d->isComputer;
+}
+
+void RegularGame::performComputer()
+{
+    QList<int> legalmovesList;
+    std::random_device rd;
+    std::mt19937 g(rd());
+
+    calculateLegalMoves(d->squareBoardSize);
+    for (int i = 0; i < (d->squareBoardSize*d->squareBoardSize); ++i) {
+        if(d->calculatedMoves[i]){
+            legalmovesList.append(i);
+        }
+    }
+
+    if (legalmovesList.size() != 0){
+        std::shuffle(legalmovesList.begin(), legalmovesList.end(), g);
+        processMove(legalmovesList[0]);
     }
 }
 
@@ -172,6 +205,148 @@ void RegularGame::refreshTileCount(int size)
 
 // game control
 
+void RegularGame::startGame(int size, int gameType, QList<QString> names)
+{
+    // TODO: size should be 6 <= x <= 20 and must be even
+    // if a board exists, delete all the tiles first
+    if (d->tiles.count() != 0){
+        clearTiles();
+    }
+
+    d->squareBoardSize = size;
+    d->gameType = gameType;
+    d->firstPlayerRunOut = ReversiTile::Empty;
+    d->focusedCoords = {0, 0};
+    d->playerNames = names;
+    d->showTurnsScreen = true;
+
+    d->playerCanPlay = true;
+    d->isComputer = false;
+
+    // create new tiles
+    for (int row = 0; row < size; ++row){
+        for (int col = 0; col < size; ++col){
+            // make tiles
+            ReversiTile* tile = new ReversiTile(this,
+                                                8*row + col);
+
+            // link the window's resize event to set the proper tile width
+            connect(this, &RegularGame::windowResized,
+                    tile, &ReversiTile::setAppropriateSize);
+
+            connect(this, &RegularGame::setHighlightVisibility,
+                    tile, &ReversiTile::setHighlightIsVisible);
+
+            // resizeEvent
+            QSize boardSize = QSize(d->squareBoardSize,d->squareBoardSize);
+            emit windowResized(boardSize, ui->gameWidget->size());
+
+            // if clicked on a tile, process the move
+            connect(tile, &ReversiTile::clickedTileID,
+                    this, [=](int tileId){
+                if (d->playerCanPlay){
+                    processMove(tileId);
+                }
+            });
+
+            // add tile to game board
+            d->tiles.append(tile);
+            ui->gameGrid->addWidget(tile, row, col);
+        }
+    }
+
+    /* initialize calculated legal moves grid
+     * this isn't used for main functions, but rather
+     * to be used for hints and computer moves
+     */
+    d->calculatedMoves.resize(size * size);
+
+    // default positions
+    // TODO: this assumes a 8x8 board.
+    d->tiles[27]->setType(ReversiTile::Light);
+    d->tiles[28]->setType(ReversiTile::Dark);
+    d->tiles[35]->setType(ReversiTile::Dark);
+    d->tiles[36]->setType(ReversiTile::Light);
+
+    // UI functions
+    ui->noMoreMoves->hide();
+
+    // start clock
+    d->gameTime.start();
+    d->updater.setInterval(1000);
+    connect(&d->updater, &QTimer::timeout,
+            this,       [=]{
+        QTime statusTimer = QTime::fromMSecsSinceStartOfDay(d->gameTime.elapsed());
+        ui->timerDisplay->setText(tr("Time: %1").arg(statusTimer.toString("mm:ss")));
+    });
+    d->updater.start();
+
+    connect(this, &RegularGame::numMovesChanged,
+            this, [=](int movesLeft){
+        qDebug() << "Moves left:" << movesLeft;
+        if (movesLeft == 0){
+            // pass it back to the other player
+
+            d->showTurnsScreen = false;
+            if (d->firstPlayerRunOut == 0){
+                d->firstPlayerRunOut = d->currentPlayer;
+                switchPlayers();
+                calculateLegalMoves(size); // calculate moves for the other player
+            } else {
+                // the game ends here
+                ui->noMoreMoves->show();
+                d->updater.stop();
+            }
+        } else {
+            /* clear "first player to run out of moves" flag since
+             * we can still play
+             */
+
+            d->showTurnsScreen = true;
+            d->firstPlayerRunOut = 0;
+        }
+    });
+
+    connect(this, &RegularGame::tileCountChanged,
+            this, [=](QList<int> tileCounts){
+        ui->darkCount->setText(tr("Dark: %1").arg(tileCounts[1]));
+        ui->lightCount->setText(tr("Light: %1").arg(tileCounts[2]));
+    });
+
+    connect(this, &RegularGame::playerChanged,
+            this, [=](int player){
+        ui->playerName->setText(d->playerNames[player]);
+    });
+
+
+    connect(ui->hintButton, &QPushButton::clicked,
+            this, [=](bool){
+        if (d->playerCanPlay){
+            for (int i = 0; i < (d->squareBoardSize*d->squareBoardSize); ++i) {
+                if(d->calculatedMoves[i]){
+                    d->tiles[i]->flashTile();
+                    break;
+                }
+            }
+        }
+    });
+
+    // TODO: make first player adjustable
+    setActivePlayer(ReversiTile::Dark); // dark goes first
+
+    // count all the tiles
+    refreshTileCount(d->squareBoardSize);
+
+    calculateLegalMoves(size);
+
+    // set focus
+    d->tiles.first()->setFocus();
+    this->setFocusProxy(d->tiles.first());
+
+    d->bgMusic = new BackgroundMusic(this, ":/audio/bgm/game.mod");
+    d->bgMusic->startMusic();
+}
+
 QMap<QString, QVariant> RegularGame::getFlippable(int from, int row_offset, int col_offset, int row, int col)
 {
     /* checks the tile at row, col and traverses in the direction of
@@ -225,167 +400,40 @@ QMap<QString, QVariant> RegularGame::getFlippable(int from, int row_offset, int 
     return map;
 }
 
-void RegularGame::startGame(int size, int gameType)
+void RegularGame::flipRelevantTiles(int row, int col)
 {
-    // TODO: size should be 6 <= x <= 20 and must be even
-    // if a board exists, delete all the tiles first
-    if (d->tiles.count() != 0){
-        clearTiles();
-    }
+    bool anyFlipped = false;
+    for (int row_offset = -1; row_offset < 2; ++row_offset){
+    for (int col_offset = -1; col_offset < 2; ++col_offset){
+        QMap<QString, QVariant> flippable = getFlippable(d->currentPlayer,
+                                                         row_offset,
+                                                         col_offset,
+                                                         row,
+                                                         col);
+        if (flippable["canFlip"].toBool()){
+            qDebug() << "Flipping" << row  << col <<
+                        ".." <<
+                        rowAndColFromID(flippable["tileToFlip"]
+                        .value<ReversiTile*>()
+                        ->getID());
 
-    d->squareBoardSize = size;
-    d->gameType = gameType;
-    d->firstPlayerRunOut = ReversiTile::Empty;
-    d->focusedCoords = {0, 0};
+            // add our tile to the board
+            getTileAt(row, col)->setType(d->currentPlayer);
+            flippable["tileToFlip"].value<ReversiTile*>()->flip();
 
-    // create new tiles
-    for (int row = 0; row < size; ++row){
-        for (int col = 0; col < size; ++col){
-            // make tiles
-            ReversiTile* tile = new ReversiTile(this,
-                                                8*row + col);
-
-            // link the window's resize event to set the proper tile width
-            connect(this, &RegularGame::windowResized,
-                    tile, &ReversiTile::setAppropriateSize);
-
-            // if clicked on a tile, process the move
-            connect(tile, &ReversiTile::clickedTileID,
-                    this, &RegularGame::processMove);
-
-            // add tile to game board
-            d->tiles.append(tile);
-            ui->gameGrid->addWidget(tile, row, col);
+            anyFlipped = true;
         }
     }
+    }
 
-    /* initialize calculated legal moves grid
-     * this isn't used for main functions, but rather
-     * to be used for hints and computer moves
-     */
-    d->calculatedMoves.resize(size * size);
+    if (anyFlipped){
+        // play sound
+        MusicEngine::playSoundEffect(MusicEngine::Warning);
+    }
 
-    // default positions
-    // TODO: this assumes a 8x8 board.
-    d->tiles[27]->setType(ReversiTile::Light);
-    d->tiles[28]->setType(ReversiTile::Dark);
-    d->tiles[35]->setType(ReversiTile::Dark);
-    d->tiles[36]->setType(ReversiTile::Light);
-
-    // UI functions
-    ui->noMoreMoves->hide();
-
-    // start clock
-    d->gameTime.start();
-    d->updater.setInterval(1000);
-    connect(&d->updater, &QTimer::timeout,
-            this,       [=]{
-        QTime statusTimer = QTime::fromMSecsSinceStartOfDay(d->gameTime.elapsed());
-        ui->timerDisplay->setText(tr("Time: %1").arg(statusTimer.toString("mm:ss")));
-    });
-    d->updater.start();
-
-    connect(this, &RegularGame::numMovesChanged,
-            this, [=](int movesLeft){
-        qDebug() << "Moves left:" << movesLeft;
-        if (movesLeft == 0){
-            // pass it back to the other player
-
-            if (d->firstPlayerRunOut == 0){
-                d->firstPlayerRunOut = d->currentPlayer;
-                switchPlayers();
-                calculateLegalMoves(size); // calculate moves for the other player
-            } else {
-                // the game ends here
-                ui->noMoreMoves->show();
-                d->updater.stop();
-            }
-        } else {
-            /* clear "first player to run out of moves" flag since
-             * we can still play
-             */
-            d->firstPlayerRunOut = 0;
-        }
-    });
-
-    connect(this, &RegularGame::tileCountChanged,
-            this, [=](QList<int> tileCounts){
-        ui->darkCount->setText(tr("Dark: %1").arg(tileCounts[1]));
-        ui->lightCount->setText(tr("Light: %1").arg(tileCounts[2]));
-    });
-
-    connect(this, &RegularGame::playerChanged,
-            this, [=](int player){
-        ui->playerName->setText(d->playerNames[player]);
-    });
-
-
-    connect(ui->hintButton, &QPushButton::clicked,
-            this, [=](bool){
-        for (int i = 0; i < (d->squareBoardSize*d->squareBoardSize); ++i) {
-            if(d->calculatedMoves[i]){
-                d->tiles[i]->flashTile();
-                break;
-            }
-        }
-    });
-
-    // TODO: make first player adjustable
-    setActivePlayer(ReversiTile::Dark); // dark goes first
-
-    // count all the tiles
-    refreshTileCount(d->squareBoardSize);
-
-    calculateLegalMoves(size);
-
-    // set focus
-    d->tiles.first()->setFocus();
-    this->setFocusProxy(d->tiles.first());
-
-    d->bgMusic = new BackgroundMusic(this, ":/audio/bgm/game.mod");
-    d->bgMusic->startMusic();
 }
 
-void RegularGame::pauseSession()
-{
-    d->bgMusic->pauseMusic();
-
-    MusicEngine::pauseBackgroundMusic();
-    MusicEngine::playSoundEffect(MusicEngine::Pause);
-
-    PauseScreen* screen = new PauseScreen(this);
-    connect(screen, &PauseScreen::resume, this, [=] {
-        screen->deleteLater();
-        d->bgMusic->resumeMusic();
-        ReversiTile* focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
-        focused->setFocus();
-        this->setFocusProxy(focused);
-//        d->tiles.first()->setFocus();
-    });
-    connect(screen, &PauseScreen::newGame, this, [=] {
-//        screen->deleteLater();
-//        startGame(d->width, boardDimensions().height(), d->mines);
-    });
-    connect(screen, &PauseScreen::mainMenu, this, [=] {
-        screen->deleteLater();
-//        emit returnToMainMenu();
-    });
-    connect(screen, &PauseScreen::provideMetadata, this, [=](QVariantMap* metadata) {
-        //TODO
-//        QStringList description;
-//        description.append(tr("%1 × %2 board").arg(d->width).arg(boardDimensions().height()));
-//        description.append(tr("%1 mines").arg(d->mines));
-//        description.append(tr("%1 flagged").arg(d->mines - d->minesRemaining));
-//        description.append(tr("%1 mines to go").arg(d->minesRemaining));
-//        description.append(tr("%1% cleared").arg(static_cast<int>(static_cast<float>(d->remainingTileCount) / d->tiles.count() * 100)));
-
-//        metadata->insert("description", description.join(" ∙ "));
-    });
-//    connect(screen, &PauseScreen::provideSaveData, this, &GameScreen::saveGame);
-    screen->show();
-}
-
-void RegularGame::calculateLegalMoves(int size)
+int RegularGame::calculateLegalMoves(int size)
 {
     /* traverses the entire grid to see if there's any moves that can be
      * made by the player
@@ -433,6 +481,7 @@ void RegularGame::calculateLegalMoves(int size)
         }
     }
     emit numMovesChanged(numLegalMoves);
+    return numLegalMoves;
 }
 
 void RegularGame::processMove(int tileId)
@@ -445,38 +494,24 @@ void RegularGame::processMove(int tileId)
     int row = rowCol.first;
     int col = rowCol.second;
 
-    bool anyFlipped = false;
-
     if (d->tiles[tileId]->getHighlightable()){
-        for (int row_offset = -1; row_offset < 2; ++row_offset){
-        for (int col_offset = -1; col_offset < 2; ++col_offset){
-            QMap<QString, QVariant> flippable = getFlippable(d->currentPlayer,
-                                                             row_offset,
-                                                             col_offset,
-                                                             row,
-                                                             col);
-            if (flippable["canFlip"].toBool()){
-                qDebug() << "Flipping" << row  << col <<
-                            ".." <<
-                            rowAndColFromID(flippable["tileToFlip"]
-                            .value<ReversiTile*>()
-                            ->getID());
-
-                // add our tile to the board
-                d->tiles[tileId]->setType(d->currentPlayer);
-                flippable["tileToFlip"].value<ReversiTile*>()->flip();
-
-                anyFlipped = true;
-            }
-        }
-        }
-
-        if (anyFlipped){
-            // play sound
-            MusicEngine::playSoundEffect(MusicEngine::Warning);
-        }
+        flipRelevantTiles(row, col);
         // take turns
         switchPlayers();
+
+        if (d->gameType == VsComputer){
+            if(!d->isComputer){
+                // AI time
+                d->playerCanPlay = false;
+                d->isComputer = true;
+                emit setHighlightVisibility(false);
+                QTimer::singleShot(2500, this, [=]{
+                    performComputer();
+                    d->isComputer = false;
+                });
+            }
+        }
+
         calculateLegalMoves(d->squareBoardSize);
         refreshTileCount(d->squareBoardSize);
     }
@@ -489,6 +524,75 @@ void RegularGame::clearTiles()
         tile->deleteLater();
     }
     d->tiles.clear();
+}
+
+// overlays
+
+void RegularGame::pauseSession()
+{
+    d->bgMusic->pauseMusic();
+
+    d->updater.stop();
+
+    MusicEngine::playSoundEffect(MusicEngine::Pause);
+
+    PauseScreen* screen = new PauseScreen(this);
+    connect(screen, &PauseScreen::resume, this, [=] {
+        screen->deleteLater();
+        d->bgMusic->resumeMusic();
+        ReversiTile* focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+        focused->setFocus();
+        this->setFocusProxy(focused);
+
+        // if we haven't run out of moves yet
+        // TODO: we need a better timer system
+        // if (d->firstPlayerRunOut != 0) d->updater.start();
+    });
+    connect(screen, &PauseScreen::newGame, this, [=] {
+        screen->deleteLater();
+        d->bgMusic->stopMusic();
+        startGame(8, d->gameType, d->playerNames);
+    });
+    connect(screen, &PauseScreen::mainMenu, this, [=] {
+        screen->deleteLater();
+//        emit returnToMainMenu();
+    });
+    connect(screen, &PauseScreen::provideMetadata, this, [=](QVariantMap* metadata) {
+        //TODO
+//        QStringList description;
+//        description.append(tr("%1 × %2 board").arg(d->width).arg(boardDimensions().height()));
+//        description.append(tr("%1 mines").arg(d->mines));
+//        description.append(tr("%1 flagged").arg(d->mines - d->minesRemaining));
+//        description.append(tr("%1 mines to go").arg(d->minesRemaining));
+//        description.append(tr("%1% cleared").arg(static_cast<int>(static_cast<float>(d->remainingTileCount) / d->tiles.count() * 100)));
+
+//        metadata->insert("description", description.join(" ∙ "));
+    });
+//    connect(screen, &PauseScreen::provideSaveData, this, &GameScreen::saveGame);
+    screen->show();
+}
+
+void RegularGame::playersTurnScreen()
+{
+    if(d->showTurnsScreen){
+    QTimer::singleShot(500, this, [=]{
+        TurnsScreen* screen = new TurnsScreen(this, d->playerNames[d->currentPlayer]);
+        connect(screen, &TurnsScreen::doneShown, this, [=] {
+            screen->deleteLater();
+
+            d->focusedCoords = QPair<int,int>(0, 0);
+            ReversiTile* focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+            focused->setFocus();
+            this->setFocusProxy(focused);
+
+            if (!d->isComputer){
+                d->playerCanPlay = true;
+                emit setHighlightVisibility(true);
+            }
+        });
+        screen->show();
+    });
+    }
 }
 
 // events
