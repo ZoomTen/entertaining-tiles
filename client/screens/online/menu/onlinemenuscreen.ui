@@ -35,7 +35,7 @@
         <x>0</x>
         <y>0</y>
         <width>391</width>
-        <height>482</height>
+        <height>536</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -47,12 +47,22 @@
         </widget>
        </item>
        <item>
-        <widget class="QCommandLinkButton" name="startGameButton">
+        <widget class="QCommandLinkButton" name="openLobbyButton">
          <property name="text">
-          <string>Challenge</string>
+          <string>Create Challenge</string>
          </property>
          <property name="description">
           <string>Challenge a friend to a match</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCommandLinkButton" name="joinLobbyButton">
+         <property name="text">
+          <string>Accept Challenge</string>
+         </property>
+         <property name="description">
+          <string>Accept a friend's challenge</string>
          </property>
         </widget>
        </item>

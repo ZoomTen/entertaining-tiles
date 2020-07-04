@@ -114,7 +114,7 @@ class Room {
             });
 
             if (this.#users.length == 0) {
-                deleteRoom();
+                this.deleteRoom();
             } else {
                 this.beamRoomUpdate();
             }
@@ -139,7 +139,7 @@ class Room {
                 session: user.sessionId,
                 username: user.username,
                 picture: user.picture,
-                colour: user.colour,
+                color: user.color,
                 isHost: this.isHost(user)
             });
         }

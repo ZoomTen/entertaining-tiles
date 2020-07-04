@@ -2,6 +2,7 @@
 #define ONLINESCREEN_H
 
 #include <QWidget>
+#include "audio/backgroundmusic.h"
 
 namespace Ui {
 class OnlineScreen;
@@ -21,10 +22,12 @@ signals:
     void backToMain();
 
 private:
+    BackgroundMusic* bgm;
     Ui::OnlineScreen *ui;
 
     void setupGenericHooks();
     void setupMenuHooks();
+    void setupJsonHooks();
 };
 
 #endif // ONLINESCREEN_H

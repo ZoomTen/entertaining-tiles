@@ -20,10 +20,14 @@ OnlineScreen::OnlineScreen(QWidget *parent) :
 
     setupMenuHooks();
     setupGenericHooks();
+    setupJsonHooks();
+
+    ui->onlinePageSwitcher->setCurrentAnimation(tStackedWidget::SlideHorizontal);
 }
 
 OnlineScreen::~OnlineScreen()
 {
+    delete bgm;
     delete ui;
 }
 
@@ -116,5 +120,65 @@ void OnlineScreen::setupMenuHooks()
 {
     connect(ui->menuScreen, &OnlineMenuScreen::quitOnline, this, [=]{
         OnlineController::instance()->close();
+    });
+}
+
+void OnlineScreen::setupJsonHooks()
+{
+    connect(OnlineController::instance(), &OnlineController::jsonMessage, this, [=](QJsonDocument doc) {
+        QJsonObject object = doc.object();
+        QString type = object.value("type").toString();
+
+        if (type == "stateChange") {
+            QString state = object.value("newState").toString();
+            qDebug() << state;
+
+            if (state == "idle") {
+                ui->onlinePageSwitcher->setCurrentWidget(ui->menuScreen);
+
+//                DiscordIntegration::instance()->setPresence({
+//                    {"state", tr("Idle")},
+//                    {"details", tr("Main Menu")}
+//                });
+            }
+            else if (state == "lobby") {
+                BackgroundMusic* bgm = new BackgroundMusic(this, ":/audio/bgm/game-lobby.mod");
+                bgm->startMusic();
+//                MusicEngine::setBackgroundMusic("airlounge");
+//                MusicEngine::playBackgroundMusic();
+
+                ui->onlinePageSwitcher->setCurrentWidget(ui->lobbyScreen);
+            }
+            else if (state == "game") {
+//                MusicEngine::setBackgroundMusic("crypto");
+//                MusicEngine::playBackgroundMusic();
+
+                ui->onlinePageSwitcher->setCurrentWidget(ui->onlineGameScreen);
+            }
+        }
+
+//        else if (type == "availableRoomsReply") {
+//            OnlineJoinScreen* joinScreen = new OnlineJoinScreen(object, this);
+//        }
+
+        else if (type == "joinRoomFailed") {
+            QString error = tr("Give it another go.");
+            QString serverMessage = object.value("reason").toString();
+            if (serverMessage == "room.invalid") {
+                error = tr("That room doesn't exist.");
+            } else if (serverMessage == "room.full") {
+                error = tr("That room is full.");
+            } else if (serverMessage == "room.closed") {
+                error = tr("That room is closed. Wait for the current game to end and then you'll be able to join.");
+            }
+
+            QuestionOverlay* question = new QuestionOverlay(this);
+            question->setIcon(QMessageBox::Critical);
+            question->setTitle(tr("Can't join that room"));
+            question->setText(error);
+            question->setButtons(QMessageBox::Ok);
+            connect(question, &QuestionOverlay::accepted, question, &QuestionOverlay::deleteLater);
+            connect(question, &QuestionOverlay::rejected, question, &QuestionOverlay::deleteLater);
+        }
     });
 }

@@ -65,6 +65,7 @@ class Game {
     #ws;            // web socket
     #username;
     #userId;
+    #picture;
     #sessionId;
     #state;
     #room;
@@ -86,6 +87,10 @@ class Game {
         // close / crash message
         ws.on("close", (code, reason) => {
             winston.log('silly', `Entertaining Tiles client closed, code ${code}, reason: ${reason}`);
+        });
+
+        db.userForUsername(username).then(info => {
+            this.#picture = info.gravHash;
         });
 
         // install command handlers
@@ -144,10 +149,11 @@ class Game {
         }
     }
 
-    joinRoom(){
+    joinRoom(message){
         if (this.#state != States.idle) {
             this.#ws.close(1002); // we must be idle
         } else {
+            console.log(message);
             // join a room ID
             let room = Room.roomById(message.roomId);
 
@@ -174,7 +180,7 @@ class Game {
             // if we're successful, set the current user's room
             this.#room = room;
 
-            this.stateChange("lobby") // user is now in the lobby, they
+            this.changeState("lobby") // user is now in the lobby, they
                                       // can't open another room at the
                                       // same time
         }
@@ -252,8 +258,8 @@ class Game {
         return this.#picture;
     }
 
-    get colour() {
-        return this.#colour;
+    get color() {
+        return this.#color;
     }
 
     get sessionId() {

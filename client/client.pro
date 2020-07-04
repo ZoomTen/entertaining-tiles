@@ -20,6 +20,7 @@ SOURCES += \
     screens/game/regulargame.cpp \
     screens/game/turnsscreen.cpp \
     screens/main/mainscreen.cpp \
+    screens/online/lobby/lobbyscreen.cpp \
     screens/online/menu/onlinemenuscreen.cpp \
     screens/online/onlinescreen.cpp \
     screens/online/pending/onlinependingscreen.cpp \
@@ -33,6 +34,7 @@ HEADERS += \
     screens/game/regulargame.h \
     screens/game/turnsscreen.h \
     screens/main/mainscreen.h \
+    screens/online/lobby/lobbyscreen.h \
     screens/online/menu/onlinemenuscreen.h \
     screens/online/onlinescreen.h \
     screens/online/pending/onlinependingscreen.h \
@@ -43,6 +45,7 @@ FORMS += \
     screens/game/regulargame.ui \
     screens/game/turnsscreen.ui \
     screens/main/mainscreen.ui \
+    screens/online/lobby/lobbyscreen.ui \
     screens/online/menu/onlinemenuscreen.ui \
     screens/online/onlinescreen.ui \
     screens/online/pending/onlinependingscreen.ui \

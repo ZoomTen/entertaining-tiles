@@ -33,7 +33,7 @@
     <widget class="tStackedWidget" name="onlinePageSwitcher">
      <widget class="OnlinePendingScreen" name="pendingScreen"/>
      <widget class="OnlineMenuScreen" name="menuScreen"/>
-     <widget class="QWidget" name="lobbyScreen"/>
+     <widget class="LobbyScreen" name="lobbyScreen"/>
      <widget class="QWidget" name="onlineGameScreen"/>
     </widget>
    </item>
@@ -56,6 +56,12 @@
    <class>OnlineMenuScreen</class>
    <extends>QWidget</extends>
    <header>screens/online/menu/onlinemenuscreen.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>LobbyScreen</class>
+   <extends>QWidget</extends>
+   <header>screens/online/lobby/lobbyscreen.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

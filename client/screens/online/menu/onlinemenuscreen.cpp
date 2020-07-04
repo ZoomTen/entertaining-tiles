@@ -4,6 +4,8 @@
 // standard entertaining stuff
 #include <online/accountdialog.h>
 #include <online/friendsdialog.h>
+#include "onlinecontroller/onlinecontroller.h"
+#include <QJsonObject>
 
 OnlineMenuScreen::OnlineMenuScreen(QWidget *parent) :
     QWidget(parent),
@@ -22,6 +24,20 @@ OnlineMenuScreen::~OnlineMenuScreen()
 
 void OnlineMenuScreen::setupButtonEvents()
 {
+    // Create lobby
+    connect(ui->openLobbyButton, &QCommandLinkButton::clicked, this, [=]{
+        OnlineController::instance()->sendJsonO({
+                {"type", "openRoom"}
+            });
+    });
+
+    // Join lobby
+    connect(ui->joinLobbyButton, &QCommandLinkButton::clicked, this, [=]{
+        OnlineController::instance()->sendJsonO({
+                {"type", "listRooms"}
+            });
+    });
+
     // Account button clicked
     connect(ui->accountButton, &QCommandLinkButton::clicked, this, [=]{
         // pull up stock account dialog
@@ -55,7 +71,7 @@ void OnlineMenuScreen::setupUI()
         ui->exitButton->click();
     });
 
-    this->setFocusProxy(ui->startGameButton);
-    ui->barrierTop->setBounceWidget(ui->startGameButton);
+    this->setFocusProxy(ui->openLobbyButton);
+    ui->barrierTop->setBounceWidget(ui->openLobbyButton);
     ui->barrierBottom->setBounceWidget(ui->exitButton);
 }
