@@ -11,7 +11,6 @@
 
 #include <QTime>
 #include <QTimer>
-#include <QElapsedTimer>
 
 #include "audio/backgroundmusic.h"
 
@@ -42,7 +41,9 @@ struct RegularGamePrivate{
     QVector<bool> calculatedMoves;
     QPair<int, int> focusedCoords;
 
-    QElapsedTimer gameTime;
+    QPair<int, int> darkLightCount;
+
+    QTime gameTime;
     QTimer updater;
 
     BackgroundMusic* bgMusic;
@@ -59,6 +60,7 @@ RegularGame::RegularGame(QWidget *parent) :
     // assign "A" / Enter button to flip tiles
     ui->gamepadHud->setButtonText(QGamepadManager::ButtonA, tr("Flip Tile"));
     ui->gamepadHud->bindKey(Qt::Key_Return, QGamepadManager::ButtonA);
+    ui->gamepadHud->bindKey(Qt::Key_Space, QGamepadManager::ButtonX);
 
     // assign "L1" / H button to show hints (lol?)
     ui->gamepadHud->setButtonText(QGamepadManager::ButtonL1, tr("Hint"));
@@ -67,6 +69,128 @@ RegularGame::RegularGame(QWidget *parent) :
     // assign "Start" / Esc button to pause
     ui->gamepadHud->setButtonText(QGamepadManager::ButtonStart, tr("Pause"));
     ui->gamepadHud->bindKey(Qt::Key_Escape, QGamepadManager::ButtonStart);
+
+    connect(this, &RegularGame::numMovesChanged,
+            this, [=](int movesLeft){
+        qDebug() << "Moves left:" << movesLeft;
+        /* BUG: on vs. computer sometimes the "computer" screen will display
+         * when it's actually the player's turn due to the computer
+         * running out of moves
+         */
+        if (movesLeft == 0){
+            // pass it back to the other player
+
+            d->showTurnsScreen = false;
+            if (d->firstPlayerRunOut == 0){
+                d->firstPlayerRunOut = d->currentPlayer;
+                switchPlayers();
+                calculateLegalMoves(d->squareBoardSize); // calculate moves for the other player
+            } else {
+                // the game ends here
+                emit gameOver();
+            }
+        } else {
+            /* clear "first player to run out of moves" flag since
+             * we can still play
+             */
+
+            d->showTurnsScreen = true;
+            d->firstPlayerRunOut = 0;
+
+            /* If we're playing in computer mode,
+             * let's run the AI
+             */
+            if (d->gameType == VsComputer){
+                if(!d->isComputer){
+                if(d->currentPlayer == ReversiTile::Light){
+                    // AI time
+                    d->isComputer = true;
+                    emit setHighlightVisibility(false);
+                    QTimer::singleShot(2500, this, [=]{
+                        performComputer();
+                        d->isComputer = false;
+                    });
+                }
+                }
+            }
+        }
+    });
+
+    connect(this, &RegularGame::tileCountChanged,
+            this, [=](QList<int> tileCounts){
+        d->darkLightCount = QPair<int,int> (tileCounts[1], tileCounts[2]);
+        ui->darkCount->setText(tr("Dark: %1").arg(tileCounts[1]));
+        ui->lightCount->setText(tr("Light: %1").arg(tileCounts[2]));
+    });
+
+    connect(this, &RegularGame::playerChanged,
+            this, [=](int player){
+        ui->playerName->setText(d->playerNames[player]);
+    });
+
+    // on game over
+    connect(this, &RegularGame::gameOver,
+            this, [=](){
+        ui->noMoreMoves->show();
+
+        // disable hint button
+        ui->hintButton->setDisabled(true);
+        ui->gamepadHud->removeText(QGamepadManager::ButtonL1);
+
+        // flip tile button
+        ui->gamepadHud->removeText(QGamepadManager::ButtonA);
+        ui->gamepadHud->setButtonText(QGamepadManager::ButtonX, "Select");
+
+        d->updater.stop();
+
+        QTimer::singleShot(5500, this, [=]{
+            d->bgMusic->stopMusic();
+            d->bgMusic = new BackgroundMusic(this, ":/audio/bgm/game-online.mod");
+            d->bgMusic->startMusic();
+
+            if (d->darkLightCount.first != d->darkLightCount.second){
+                int winTileCount;
+                QString winnerName;
+                if (d->darkLightCount.first > d->darkLightCount.second){
+                    winTileCount = d->darkLightCount.first;
+                    winnerName = d->playerNames[1];
+                } else {
+                    winTileCount = d->darkLightCount.second;
+                    winnerName = d->playerNames[2];
+                }
+                ui->winText->setText(tr("The winner is %1, with %2 tiles!")
+                                     .arg(winnerName)
+                                     .arg(winTileCount));
+            } else {
+                ui->winText->setText(tr("It's a %1-tile tie!")
+                                     .arg(d->darkLightCount.first));
+            }
+            ui->gameCanvas->setCurrentWidget(ui->overScreen);
+        });
+    });
+
+    connect(ui->hintButton, &QPushButton::clicked,
+            this, [=](bool){
+        if (d->playerCanPlay){
+            for (int i = 0; i < (d->squareBoardSize*d->squareBoardSize); ++i) {
+                if(d->calculatedMoves[i]){
+                    d->tiles[i]->flashTile();
+                    break;
+                }
+            }
+        }
+    });
+
+    connect(ui->backToMenu, &QPushButton::clicked,
+            this, [=](bool){
+        emit returnToMainMenu();
+    });
+
+    connect(this, &RegularGame::returnToMainMenu,
+            this, [=]{
+        d->bgMusic->stopMusic();
+    });
+
 
 }
 
@@ -284,81 +408,15 @@ void RegularGame::startGame(int size, int gameType, QList<QString> names)
     ui->noMoreMoves->hide();
 
     // start clock
-    d->gameTime.start();
+    d->gameTime = QTime();
+    d->gameTime.setHMS(0,0,0);
     d->updater.setInterval(1000);
     connect(&d->updater, &QTimer::timeout,
             this,       [=]{
-        QTime statusTimer = QTime::fromMSecsSinceStartOfDay(d->gameTime.elapsed());
-        ui->timerDisplay->setText(tr("Time: %1").arg(statusTimer.toString("mm:ss")));
+        d->gameTime = d->gameTime.addSecs(1);
+        ui->timerDisplay->setText(tr("Time: %1").arg(d->gameTime.toString("mm:ss")));
     });
     d->updater.start();
-
-    connect(this, &RegularGame::numMovesChanged,
-            this, [=](int movesLeft){
-        qDebug() << "Moves left:" << movesLeft;
-        if (movesLeft == 0){
-            // pass it back to the other player
-
-            d->showTurnsScreen = false;
-            if (d->firstPlayerRunOut == 0){
-                d->firstPlayerRunOut = d->currentPlayer;
-                switchPlayers();
-                calculateLegalMoves(size); // calculate moves for the other player
-            } else {
-                // the game ends here
-                ui->noMoreMoves->show();
-                d->updater.stop();
-            }
-        } else {
-            /* clear "first player to run out of moves" flag since
-             * we can still play
-             */
-
-            d->showTurnsScreen = true;
-            d->firstPlayerRunOut = 0;
-
-            /* If we're playing in computer mode,
-             * let's run the AI
-             */
-            if (d->gameType == VsComputer){
-                if(!d->isComputer){
-                if(d->currentPlayer == ReversiTile::Light){
-                    // AI time
-                    d->isComputer = true;
-                    emit setHighlightVisibility(false);
-                    QTimer::singleShot(2500, this, [=]{
-                        performComputer();
-                        d->isComputer = false;
-                    });
-                }
-                }
-            }
-        }
-    });
-
-    connect(this, &RegularGame::tileCountChanged,
-            this, [=](QList<int> tileCounts){
-        ui->darkCount->setText(tr("Dark: %1").arg(tileCounts[1]));
-        ui->lightCount->setText(tr("Light: %1").arg(tileCounts[2]));
-    });
-
-    connect(this, &RegularGame::playerChanged,
-            this, [=](int player){
-        ui->playerName->setText(d->playerNames[player]);
-    });
-
-
-    connect(ui->hintButton, &QPushButton::clicked,
-            this, [=](bool){
-        if (d->playerCanPlay){
-            for (int i = 0; i < (d->squareBoardSize*d->squareBoardSize); ++i) {
-                if(d->calculatedMoves[i]){
-                    d->tiles[i]->flashTile();
-                    break;
-                }
-            }
-        }
-    });
 
     // TODO: make first player adjustable
     setActivePlayer(ReversiTile::Dark); // dark goes first
@@ -374,6 +432,8 @@ void RegularGame::startGame(int size, int gameType, QList<QString> names)
 
     d->bgMusic = new BackgroundMusic(this, ":/audio/bgm/game.mod");
     d->bgMusic->startMusic();
+
+    ui->gameCanvas->setCurrentAnimation(tStackedWidget::SlideHorizontal);
 }
 
 QMap<QString, QVariant> RegularGame::getFlippable(int from, int row_offset, int col_offset, int row, int col)
@@ -563,8 +623,7 @@ void RegularGame::pauseSession()
         this->setFocusProxy(focused);
 
         // if we haven't run out of moves yet
-        // TODO: we need a better timer system
-        // if (d->firstPlayerRunOut != 0) d->updater.start();
+        if (d->firstPlayerRunOut == 0) d->updater.start();
     });
     connect(screen, &PauseScreen::newGame, this, [=] {
         screen->deleteLater();
@@ -573,7 +632,7 @@ void RegularGame::pauseSession()
     });
     connect(screen, &PauseScreen::mainMenu, this, [=] {
         screen->deleteLater();
-//        emit returnToMainMenu();
+        emit returnToMainMenu();
     });
     connect(screen, &PauseScreen::provideMetadata, this, [=](QVariantMap* metadata) {
         //TODO
@@ -625,11 +684,14 @@ void RegularGame::resizeEvent(QResizeEvent*)
 void RegularGame::keyPressEvent(QKeyEvent *e)
 {
     ReversiTile* focused;
+    //QEvent clickEvent(QEvent::MouseButtonPress);
     int newID;
 
+    if (ui->gameCanvas->currentWidget() == ui->mainGame){
     switch (e->key()) {
 
     case Qt::Key_Up:
+    case Qt::Key_W:
         if (--d->focusedCoords.first > -1){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
             focused->setFocus();
@@ -638,6 +700,7 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
         break;
 
     case Qt::Key_Down:
+    case Qt::Key_S:
         if (++d->focusedCoords.first < d->squareBoardSize){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
             focused->setFocus();
@@ -646,6 +709,7 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
         break;
 
     case Qt::Key_Left:
+    case Qt::Key_A:
         if (--d->focusedCoords.second > -1){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
             focused->setFocus();
@@ -654,6 +718,7 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
         break;
 
     case Qt::Key_Right:
+    case Qt::Key_D:
         if (++d->focusedCoords.second < d->squareBoardSize){
             focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
             focused->setFocus();
@@ -665,6 +730,8 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
     case Qt::Key_Return:
         focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
         focused->click();   // simulate click
+        //QApplication::sendEvent(this->focusWidget(), &clickEvent);
+        // TODO: space is used to click buttons on the Game over screen
         break;
 
     case Qt::Key_H:
@@ -698,6 +765,24 @@ void RegularGame::keyPressEvent(QKeyEvent *e)
     default:
         break;
     }
+    } else {
+        // game over
+        switch (e->key()) {
+
+        case Qt::Key_Left:
+        case Qt::Key_Backtab:
+        case Qt::Key_Right:
+        case Qt::Key_Tab:
+            if (ui->backToMenu->hasFocus()){
+                ui->backToBoard->setFocus();
+            } else {
+                ui->backToMenu->setFocus();
+            }
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 bool RegularGame::focusNextPrevChild(bool)
@@ -709,4 +794,9 @@ bool RegularGame::focusNextPrevChild(bool)
 void RegularGame::on_pauseButton_clicked()
 {
     pauseSession();
+}
+
+void RegularGame::on_backToBoard_clicked()
+{
+    ui->gameCanvas->setCurrentWidget(ui->mainGame);
 }

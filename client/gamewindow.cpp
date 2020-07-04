@@ -56,10 +56,12 @@ void GameWindow::init()
     ui->mainSwitcher->setCurrentAnimation(tStackedWidget::Lift);
 
     // enable focus pointer globally
-    /* this will be bugged in theDesk because Contemporary already comes
-     * with a focus pointer
+    /* only on non-Contemporary Qt style since the latest version of
+     * Contemporary already has the focus pointer built in
      */
-    FocusPointer::enableAutomaticFocusPointer();
+    if (QApplication::style()->objectName() != "contemporary"){
+        FocusPointer::enableAutomaticFocusPointer();
+    }
 }
 
 void GameWindow::setupFunctions()
@@ -73,6 +75,9 @@ void GameWindow::setupFunctions()
 
     // Register "back to main menu" event
     connect(ui->onlineScreen, &OnlineScreen::backToMain, this, [=]{
+        ui->mainSwitcher->setCurrentWidget(ui->mainScreen);
+    });
+    connect(ui->gameScreen, &RegularGame::returnToMainMenu, this, [=]{
         ui->mainSwitcher->setCurrentWidget(ui->mainScreen);
     });
 

@@ -46,6 +46,9 @@ signals:
 
     void setHighlightVisibility(bool);
 
+    void gameOver();
+    void returnToMainMenu();
+
 public slots:
     virtual void startGame(int size, int gameType, QList<QString> names);
 
@@ -70,6 +73,8 @@ private slots:
     void processMove(int tileId);
 
     void on_pauseButton_clicked();
+
+    void on_backToBoard_clicked();
 
 protected:
     void resizeEvent(QResizeEvent *resize);

@@ -110,7 +110,7 @@ void MainScreen::setButtonActions()
         playerName = TextInputOverlay::getText(this,
                                                    tr("What is your name?"),
                                                    &canceled,
-                                                   "Me");
+                                                   "Player");
         if (canceled) return;
 
         emit beginPlay(RegularGame::VsComputer, {tr("Empty"),
@@ -127,21 +127,18 @@ void MainScreen::setButtonActions()
             darkPlayerName = TextInputOverlay::getText(this,
                                                        tr("What is your name?"),
                                                        &canceled,
-                                                       "Me");
+                                                       "Player");
             if (canceled) return;
-        askPlayer2:
+        //askPlayer2:
             lightPlayerName = TextInputOverlay::getText(this,
                                                        tr("What is your friend's name?"),
                                                        &canceled,
-                                                       "Friend");
+                                                       "Sidekick");
             if (canceled) goto askPlayer1;
 
-        ui->localMultiplayerButton->setDisabled(true);
-        QTimer::singleShot(500, this, [=]{
             emit beginPlay(RegularGame::TakeTurns, {tr("Empty"),
                                                      darkPlayerName,
                                                      lightPlayerName});
-        });
     });
 
     connect(ui->infoButton, &QCommandLinkButton::clicked, this, [=]{
