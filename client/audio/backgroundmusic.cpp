@@ -42,7 +42,7 @@ BackgroundMusic::BackgroundMusic(QObject *parent, QString filename)
     settings.mResamplingMode = MODPLUG_RESAMPLE_LINEAR;
     settings.mLoopCount = -1;   // Loop forever
 
-    settings.mStereoSeparation = 128;
+    settings.mStereoSeparation = 64;
 
     /* use default output format settings
      * unless of course things go janky...
@@ -59,7 +59,7 @@ BackgroundMusic::BackgroundMusic(QObject *parent, QString filename)
     // initialize ModPlug player
     ModPlug_SetSettings(&settings);
     ModPlugFile* modfile = ModPlug_Load(module_data.data(), module_data.size());
-    ModPlug_SetMasterVolume(modfile, 128);
+    ModPlug_SetMasterVolume(modfile, 112);
 
     if (!modfile){
         qDebug() << tr("Entertaining Reversi: Can't read music file");
@@ -76,9 +76,6 @@ BackgroundMusic::BackgroundMusic(QObject *parent, QString filename)
                 {
                     // we run out of samples, so shut it down
                     d->audio->stop();
-                    delete d->audio;
-                    delete d->audio_buffer;
-                    delete[] d->sndBuffer;
                 }
                 else
                 {
@@ -108,9 +105,6 @@ BackgroundMusic::BackgroundMusic(QObject *parent, QString filename)
         connect(this, &BackgroundMusic::musicStopped,
                 this, [=]{
             d->audio->stop();
-            delete d->audio;
-            delete d->audio_buffer;
-            delete[] d->sndBuffer;
         });
 
         // Handle audio pause
