@@ -100,6 +100,18 @@ void RegularGame::switchPlayers()
     }
 }
 
+void RegularGame::lockPlayer()
+{
+    d->playerCanPlay = false;
+    emit setHighlightVisibility(false);
+}
+
+void RegularGame::unlockPlayer()
+{
+    d->playerCanPlay = true;
+    emit setHighlightVisibility(true);
+}
+
 bool RegularGame::playerIsComputer()
 {
     return d->isComputer;
@@ -220,7 +232,7 @@ void RegularGame::startGame(int size, int gameType, QList<QString> names)
     d->playerNames = names;
     d->showTurnsScreen = true;
 
-    d->playerCanPlay = true;
+    d->playerCanPlay = false;
     d->isComputer = false;
 
     // create new tiles
@@ -304,6 +316,23 @@ void RegularGame::startGame(int size, int gameType, QList<QString> names)
 
             d->showTurnsScreen = true;
             d->firstPlayerRunOut = 0;
+
+            /* If we're playing in computer mode,
+             * let's run the AI
+             */
+            if (d->gameType == VsComputer){
+                if(!d->isComputer){
+                if(d->currentPlayer == ReversiTile::Light){
+                    // AI time
+                    d->isComputer = true;
+                    emit setHighlightVisibility(false);
+                    QTimer::singleShot(2500, this, [=]{
+                        performComputer();
+                        d->isComputer = false;
+                    });
+                }
+                }
+            }
         }
     });
 
@@ -496,21 +525,10 @@ void RegularGame::processMove(int tileId)
 
     if (d->tiles[tileId]->getHighlightable()){
         flipRelevantTiles(row, col);
-        // take turns
-        switchPlayers();
 
-        if (d->gameType == VsComputer){
-            if(!d->isComputer){
-                // AI time
-                d->playerCanPlay = false;
-                d->isComputer = true;
-                emit setHighlightVisibility(false);
-                QTimer::singleShot(2500, this, [=]{
-                    performComputer();
-                    d->isComputer = false;
-                });
-            }
-        }
+        // take turns
+        lockPlayer();
+        switchPlayers();
 
         calculateLegalMoves(d->squareBoardSize);
         refreshTileCount(d->squareBoardSize);
@@ -575,23 +593,22 @@ void RegularGame::pauseSession()
 void RegularGame::playersTurnScreen()
 {
     if(d->showTurnsScreen){
-    QTimer::singleShot(500, this, [=]{
         TurnsScreen* screen = new TurnsScreen(this, d->playerNames[d->currentPlayer]);
-        connect(screen, &TurnsScreen::doneShown, this, [=] {
-            screen->deleteLater();
+        QTimer::singleShot(500, this, [=]{
+            connect(screen, &TurnsScreen::doneShown, this, [=] {
+                screen->deleteLater();
 
-            d->focusedCoords = QPair<int,int>(0, 0);
-            ReversiTile* focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
-            focused->setFocus();
-            this->setFocusProxy(focused);
+                d->focusedCoords = QPair<int,int>(0, 0);
+                ReversiTile* focused = getTileAt(d->focusedCoords.first, d->focusedCoords.second);
+                focused->setFocus();
+                this->setFocusProxy(focused);
 
-            if (!d->isComputer){
-                d->playerCanPlay = true;
-                emit setHighlightVisibility(true);
-            }
+                if (!d->isComputer){
+                    unlockPlayer();
+                }
+            });
+            screen->show();
         });
-        screen->show();
-    });
     }
 }
 

@@ -2,12 +2,12 @@
 #define SINGLEPLAYERGAME_H
 
 #include <QWidget>
-#include "game/reversitile.h"
 
 namespace Ui {
 class RegularGame;
 }
 
+class ReversiTile;
 struct RegularGamePrivate;
 class RegularGame : public QWidget
 {
@@ -22,8 +22,11 @@ public:
         TakeTurns
     };
 
-    virtual void setActivePlayer(int player);
-    virtual void switchPlayers();
+    void setActivePlayer(int player);
+    void switchPlayers();
+
+    void lockPlayer();
+    void unlockPlayer();
 
     ReversiTile* getTileAt(int row, int col);
     ReversiTile* getTileAtIndex(int index);
@@ -50,7 +53,7 @@ private:
     Ui::RegularGame *ui;
     RegularGamePrivate* d;
 
-    virtual void clearTiles();
+    void clearTiles();
     int calculateLegalMoves(int size);
     void refreshTileCount(int size);
 
@@ -58,15 +61,15 @@ private:
                                          int row_offset, int col_offset,
                                          int row, int col);
 
-    virtual void pauseSession();
-    virtual void performComputer();
-    virtual void flipRelevantTiles(int row, int col);
-    virtual void playersTurnScreen();
+    void pauseSession();
+    void performComputer();
+    void flipRelevantTiles(int row, int col);
+    void playersTurnScreen();
 
 private slots:
-    virtual void processMove(int tileId);
+    void processMove(int tileId);
 
-    virtual void on_pauseButton_clicked();
+    void on_pauseButton_clicked();
 
 protected:
     void resizeEvent(QResizeEvent *resize);
