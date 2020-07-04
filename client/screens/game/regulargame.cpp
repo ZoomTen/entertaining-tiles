@@ -191,6 +191,12 @@ RegularGame::RegularGame(QWidget *parent) :
         d->bgMusic->stopMusic();
     });
 
+    connect(&d->updater, &QTimer::timeout,
+            this,       [=]{
+        d->gameTime = d->gameTime.addSecs(1);
+        ui->timerDisplay->setText(tr("Time: %1").arg(d->gameTime.toString("mm:ss")));
+    });
+
 
 }
 
@@ -411,11 +417,6 @@ void RegularGame::startGame(int size, int gameType, QList<QString> names)
     d->gameTime = QTime();
     d->gameTime.setHMS(0,0,0);
     d->updater.setInterval(1000);
-    connect(&d->updater, &QTimer::timeout,
-            this,       [=]{
-        d->gameTime = d->gameTime.addSecs(1);
-        ui->timerDisplay->setText(tr("Time: %1").arg(d->gameTime.toString("mm:ss")));
-    });
     d->updater.start();
 
     // TODO: make first player adjustable
