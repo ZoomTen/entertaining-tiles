@@ -119,8 +119,8 @@ RegularGame::RegularGame(QWidget *parent) :
     connect(this, &RegularGame::tileCountChanged,
             this, [=](QList<int> tileCounts){
         d->darkLightCount = QPair<int,int> (tileCounts[1], tileCounts[2]);
-        ui->darkCount->setText(tr("Dark: %1").arg(tileCounts[1]));
-        ui->lightCount->setText(tr("Light: %1").arg(tileCounts[2]));
+        ui->darkCount->setText(QString("%1: %2").arg(d->playerNames[1]).arg(tileCounts[1]));
+        ui->lightCount->setText(QString("%1: %2").arg(d->playerNames[2]).arg(tileCounts[2]));
     });
 
     connect(this, &RegularGame::playerChanged,
