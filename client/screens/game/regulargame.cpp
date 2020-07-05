@@ -56,20 +56,6 @@ RegularGame::RegularGame(QWidget *parent) :
     ui->setupUi(this);
     d = new RegularGamePrivate();
 
-    // bind gamepad options
-    // assign "A" / Enter button to flip tiles
-    ui->gamepadHud->setButtonText(QGamepadManager::ButtonA, tr("Flip Tile"));
-    ui->gamepadHud->bindKey(Qt::Key_Return, QGamepadManager::ButtonA);
-    ui->gamepadHud->bindKey(Qt::Key_Space, QGamepadManager::ButtonX);
-
-    // assign "L1" / H button to show hints (lol?)
-    ui->gamepadHud->setButtonText(QGamepadManager::ButtonL1, tr("Hint"));
-    ui->gamepadHud->bindKey(Qt::Key_H, QGamepadManager::ButtonL1);
-
-    // assign "Start" / Esc button to pause
-    ui->gamepadHud->setButtonText(QGamepadManager::ButtonStart, tr("Pause"));
-    ui->gamepadHud->bindKey(Qt::Key_Escape, QGamepadManager::ButtonStart);
-
     connect(this, &RegularGame::numMovesChanged,
             this, [=](int movesLeft){
         qDebug() << "Moves left:" << movesLeft;
@@ -183,6 +169,7 @@ RegularGame::RegularGame(QWidget *parent) :
 
     connect(ui->backToMenu, &QPushButton::clicked,
             this, [=](bool){
+        ui->gameCanvas->setCurrentWidget(ui->mainGame);
         emit returnToMainMenu();
     });
 
@@ -362,8 +349,27 @@ void RegularGame::startGame(int size, int gameType, QList<QString> names)
     d->playerNames = names;
     d->showTurnsScreen = true;
 
-    d->playerCanPlay = false;
     d->isComputer = false;
+
+    unlockPlayer();
+
+    // bind gamepad options
+    // assign "A" / Enter button to flip tiles
+    ui->gamepadHud->setButtonText(QGamepadManager::ButtonA, tr("Flip Tile"));
+    ui->gamepadHud->bindKey(Qt::Key_Return, QGamepadManager::ButtonA);
+    ui->gamepadHud->bindKey(Qt::Key_Space, QGamepadManager::ButtonX);
+
+    // assign "L1" / H button to show hints (lol?)
+    ui->gamepadHud->setButtonText(QGamepadManager::ButtonL1, tr("Hint"));
+    ui->gamepadHud->bindKey(Qt::Key_H, QGamepadManager::ButtonL1);
+
+    // assign "Start" / Esc button to pause
+    ui->gamepadHud->setButtonText(QGamepadManager::ButtonStart, tr("Pause"));
+    ui->gamepadHud->bindKey(Qt::Key_Escape, QGamepadManager::ButtonStart);
+
+    ui->gamepadHud->removeText(QGamepadManager::ButtonX);
+
+    ui->hintButton->setDisabled(false);
 
     // create new tiles
     for (int row = 0; row < size; ++row){
