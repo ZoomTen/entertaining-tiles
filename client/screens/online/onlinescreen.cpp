@@ -27,7 +27,7 @@ OnlineScreen::OnlineScreen(QWidget *parent) :
 
 OnlineScreen::~OnlineScreen()
 {
-    delete bgm;
+    //delete bgm;
     delete ui;
 }
 
